@@ -23,7 +23,6 @@ from pyk.ktool.kfuzz import KFuzzHandler, fuzz
 from pyk.ktool.krun import KRunOutput
 from pyk.proof import ProofStatus
 from pyk.utils import run_process
-from pykwasm.wasm2kast import wasm2kast
 from rich.console import Console
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn, TimeElapsedColumn
 
@@ -44,6 +43,7 @@ from .kast.syntax import (
 from .proof import is_functional, run_claim, run_functional_claim
 from .scval import SCType
 from .utils import KSorobanError, concrete_definition, subst_on_program_cell
+from .wasm import wasm2kast
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -119,7 +119,8 @@ class Kasmer:
             name = function_spec['name']
             inputs = []
             for input_spec in function_spec['inputs']:
-                inputs.append(SCType.from_xdr_json(input_spec['type_']))
+                input_type = input_spec['type'] if 'type' in input_spec else input_spec['type_']
+                inputs.append(SCType.from_xdr_json(input_type))
             outputs = []
             for output_spec in function_spec['outputs']:
                 outputs.append(SCType.from_xdr_json(output_spec))
@@ -159,10 +160,33 @@ class Kasmer:
 
     def kast_from_wasm(self, wasm: Path) -> KInner:
         """Get a kast term from a wasm program."""
-        return wasm2kast(open(wasm, 'rb'))
+        return wasm2kast(wasm.read_bytes())
+
+    def contract_protocol(self, wasm: Path) -> int:
+        """Read the uploaded code's protocol, which controls constructor behavior."""
+        result = run_process(
+            [str(self._stellar_bin), 'contract', 'info', 'env-meta', '--output', 'json', '--wasm', str(wasm)],
+            check=True,
+        )
+        entries = json.loads(result.stdout)
+        versions = [
+            e['sc_env_meta_kind_interface_version'] for e in entries if 'sc_env_meta_kind_interface_version' in e
+        ]
+        if len(versions) != 1:
+            raise ValueError('Contract must contain exactly one interface version')
+        version = versions[0]
+        protocol = version['protocol']
+        if type(protocol) is not int or not 0 <= protocol <= 28 or version['pre_release'] != 0:
+            raise ValueError(f'Unsupported contract interface version: {version}')
+        return protocol
 
     def deploy_test(
-        self, contract: KInner, child_contracts: tuple[KInner, ...], init: bool
+        self,
+        contract: KInner,
+        child_contracts: tuple[KInner, ...],
+        init: bool,
+        protocol: int = 28,
+        child_protocols: tuple[int, ...] | None = None,
     ) -> tuple[KInner, dict[str, KInner]]:
         """Takes a wasm soroban contract and its dependencies as kast terms and deploys them in a fresh configuration.
 
@@ -170,6 +194,8 @@ class Kasmer:
             contract: The test contract to deploy, represented as a kast term.
             child_contracts: A tuple of child contracts required by the test contract.
             init: Whether to initialize the contract by calling its 'init' function after deployment.
+            protocol: The test contract's interface protocol.
+            child_protocols: Interface protocols corresponding to the child contracts; defaults to protocol 28.
 
         Returns:
             A configuration with the contract deployed.
@@ -183,7 +209,10 @@ class Kasmer:
 
         def call_init() -> tuple[KInner, ...]:
             hashes = tuple(wasm_hash(i) for i in range(len(child_contracts)))
-            upload_wasms = tuple(upload_wasm(h, c) for h, c in zip(hashes, child_contracts, strict=False))
+            protocols = child_protocols if child_protocols is not None else (28,) * len(child_contracts)
+            upload_wasms = tuple(
+                upload_wasm(h, c, p) for h, c, p in zip(hashes, child_contracts, protocols, strict=True)
+            )
 
             from_addr = account_id(b'test-account')
             to_addr = contract_id(b'test-contract')
@@ -196,7 +225,7 @@ class Kasmer:
         steps = steps_of(
             [
                 set_exit_code(1),
-                upload_wasm(b'test', contract),
+                upload_wasm(b'test', contract, protocol),
                 set_account(b'test-account', 9876543210),
                 deploy_contract(b'test-account', b'test-contract', b'test'),
                 *(call_init() if init else ()),
@@ -336,7 +365,13 @@ class Kasmer:
         contract_kast = self.kast_from_wasm(contract_wasm)
         child_kasts = tuple(self.kast_from_wasm(c) for c in child_wasms)
 
-        conf, subst = self.deploy_test(contract_kast, child_kasts, has_init)
+        conf, subst = self.deploy_test(
+            contract_kast,
+            child_kasts,
+            has_init,
+            self.contract_protocol(contract_wasm),
+            tuple(self.contract_protocol(c) for c in child_wasms),
+        )
 
         failed: list[FuzzError] = []
         with FuzzProgress(test_bindings, max_examples) as progress:
@@ -387,7 +422,13 @@ class Kasmer:
         contract_kast = self.kast_from_wasm(contract_wasm)
         child_kasts = tuple(self.kast_from_wasm(c) for c in child_wasms)
 
-        conf, subst = self.deploy_test(contract_kast, child_kasts, has_init)
+        conf, subst = self.deploy_test(
+            contract_kast,
+            child_kasts,
+            has_init,
+            self.contract_protocol(contract_wasm),
+            tuple(self.contract_protocol(c) for c in child_wasms),
+        )
 
         with FuzzProgress(test_bindings, 1) as progress:
             for task in progress.fuzz_tasks:

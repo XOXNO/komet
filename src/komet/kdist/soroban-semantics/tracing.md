@@ -385,6 +385,7 @@ Its priority (30) runs it ahead of the base rule's default priority (50).
          ~> #endWasm
             ...
         </k>
+        <activeContracts> ACTIVE => ListItem(TO) ACTIVE </activeContracts>
         <relativeObjects> RELS </relativeObjects>
         <hostObjects>     OBJS </hostObjects>
         <callStack> CALLSTACK </callStack>
@@ -396,7 +397,7 @@ Its priority (30) runs it ahead of the base rule's default priority (50).
           ...
         </contract>
         <contractData> CTRDATA </contractData>
-      requires PATH =/=String ""
+      requires PATH =/=String "" andBool notBool (TO in ACTIVE)
       [priority(30)]
 ```
 
@@ -419,6 +420,7 @@ Their priorities (35, 45) run them ahead of `endWasm-error` (40) and `endWasm` (
          ~> popWorldState
             ...
         </k>
+        <activeContracts> (ListItem(_) => .List) ... </activeContracts>
         <instrs> .K </instrs>
         <hostStack> (Error(_,_) #as ERR) : _ => ERR : .HostStack </hostStack>
         <callStack> CALLSTACK </callStack>
@@ -437,6 +439,7 @@ Their priorities (35, 45) run them ahead of `endWasm-error` (40) and `endWasm` (
          ~> #callResult(STACK, RELS)
             ...
         </k>
+        <activeContracts> (ListItem(_) => .List) ... </activeContracts>
         <instrs> .K </instrs>
         <relativeObjects> RELS </relativeObjects>
         <hostObjects>     OBJS </hostObjects>

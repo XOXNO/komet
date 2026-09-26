@@ -16,7 +16,7 @@ module HOST-CALL
 ## call
 
 ```k
-    // TODO Check reentry
+    // Reentry is checked by the shared callContract command.
     rule [hostCallAux-call]:
         <instrs> hostCallAux ( "d" , "_" )
               => #waitCommands
@@ -26,7 +26,18 @@ module HOST-CALL
         <hostStack> ScAddress(TO) : Symbol(FUNC) : ScVec(ARGS) : S => S </hostStack>
         <callee> FROM </callee>
         <k> (.K => callContract(FROM, TO, FUNC, ARGS)) ... </k>
+      requires substrString(FUNC, 0, minInt(2, lengthString(FUNC))) =/=String "__"
 
+
+    rule [hostCallAux-call-reserved]:
+        <instrs> hostCallAux("d", "_") => #throw(ErrContext, InvalidAction) ... </instrs>
+        <hostStack> ScAddress(_) : Symbol(FUNC) : ScVec(_) : S => S </hostStack>
+      requires substrString(FUNC, 0, minInt(2, lengthString(FUNC))) ==String "__"
+
+    rule [hostCallAux-try-call-reserved]:
+        <instrs> hostCallAux("d", "0") => allocObject(Error(ErrContext, InvalidAction)) ~> returnHostVal ... </instrs>
+        <hostStack> ScAddress(_) : Symbol(FUNC) : ScVec(_) : S => S </hostStack>
+      requires substrString(FUNC, 0, minInt(2, lengthString(FUNC))) ==String "__"
 
     syntax InternalInstr ::= "returnCallResult"   [symbol(returnCallResult)]
  // ------------------------------------------------------------------------
@@ -47,7 +58,7 @@ module HOST-CALL
 ## try_call
 
 ```k
-    // TODO Check reentry
+    // Reentry is checked by the shared callContract command.
     rule [hostCallAux-try-call]:
         <instrs> hostCallAux ( "d" , "0" )
               => #waitCommands
@@ -57,6 +68,7 @@ module HOST-CALL
         <hostStack> ScAddress(TO) : Symbol(FUNC) : ScVec(ARGS) : S => S </hostStack>
         <callee> FROM </callee>
         <k> (.K => callContract(FROM, TO, FUNC, ARGS)) ... </k>
+      requires substrString(FUNC, 0, minInt(2, lengthString(FUNC))) =/=String "__"
 
     syntax InternalInstr ::= "returnTryCallResult"   [symbol(returnTryCallResult)]
  // ------------------------------------------------------------------------

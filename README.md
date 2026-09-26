@@ -113,6 +113,7 @@ Fuzzing mode provides fast feedback during active development, helping catch bug
 
 ## 📚 Documentation
 
+- **[SDK 28 Host Support](docs/sdk28-support.md)** - Added imports, model boundaries and validation commands
 - **[Official Documentation](https://docs.runtimeverification.com/komet)** - Complete guides and API reference
 - **[Komet Example Tutorial](https://docs.runtimeverification.com/komet/guides/komet-example)** - Step-by-step walkthrough
 - **[Cheat Functions](https://docs.runtimeverification.com/komet/guides/cheat-functions)** - Advanced testing utilities

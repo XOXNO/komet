@@ -47,7 +47,7 @@ def _run_trace(tmp_path: Path) -> list[dict]:
     steps = steps_of(
         [
             set_exit_code(1),
-            upload_wasm(b'test', contract),
+            upload_wasm(b'test', contract, kasmer.contract_protocol(WASM)),
             set_account(b'test-account', 9876543210),
             deploy_contract(b'test-account', b'test-contract', b'test'),
             call_tx(

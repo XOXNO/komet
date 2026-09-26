@@ -2,9 +2,17 @@
 
 ```k
 requires "integer.md"
+requires "arguments.md"
+requires "crypto.md"
+requires "call.md"
+requires "../soroban.md"
 
 module HOST-LEDGER
     imports HOST-INTEGER
+    imports HOST-ARGUMENTS
+    imports SOROBAN-CRYPTO
+    imports HOST-CALL
+    imports SOROBAN-SYNTAX
 
 ```
 
@@ -15,6 +23,7 @@ module HOST-LEDGER
         <instrs> hostCall ( "l" , "_" , [ i64  i64  i64  .ValTypes ] -> [ i64  .ValTypes ] )
               => loadObjectFull(HostVal(VAL))
               ~> loadObjectFull(HostVal(KEY))
+              ~> validatePutContractData(Int2StorageType(STORAGE_TYPE))
               ~> putContractData(Int2StorageType(STORAGE_TYPE))
                  ...
         </instrs>
@@ -148,6 +157,7 @@ module HOST-LEDGER
     rule [hostfun-del-contract-data]:
         <instrs> hostCall ( "l" , "2" , [ i64  i64  .ValTypes ] -> [ i64  .ValTypes ] )
               => loadObjectFull(HostVal(KEY))
+              ~> validateDelContractData
               ~> delContractData(Int2StorageType(STORAGE_TYPE))
                  ...
         </instrs>
@@ -200,7 +210,7 @@ module HOST-LEDGER
         <hostStack> ScBytes(HASH) : S => S </hostStack>
         <contract>
           <contractId> CONTRACT </contractId>
-          <wasmHash> _ => HASH </wasmHash>
+          <contractExecutable> _ => Wasm(HASH) </contractExecutable>
           ...
         </contract>
         <contractCode>
@@ -231,7 +241,7 @@ module HOST-LEDGER
         <callee> CONTRACT </callee>
       requires Int2StorageTypeValid(STORAGE_TYPE)
 
-    syntax InternalInstr ::= extendContractDataTtl(ContractId, StorageType)   [symbol(extendContractDataTtl)]
+    syntax InternalInstr ::= extendContractDataTtl(Address, StorageType)   [symbol(extendContractDataTtl)]
  // --------------------------------------------------------------------------------------------
     rule [extendContractDataTtl]:
         <instrs> extendContractDataTtl(CONTRACT, DUR:Durability) => .K ... </instrs>
@@ -319,7 +329,7 @@ module HOST-LEDGER
         <instrs> extendContractCodeTtl(CONTRACT) => extendCodeTtl(HASH) ... </instrs>
         <contract>
           <contractId> CONTRACT </contractId>
-          <wasmHash> HASH </wasmHash>
+          <contractExecutable> Wasm(HASH) </contractExecutable>
           ...
         </contract>
 
@@ -391,5 +401,233 @@ is where `maxLiveUntil` and the max-entry-TTL constant are defined.
     rule minLiveUntil(DUR, SEQ) => SEQ +Int minEntryTtl(DUR) -Int 1
     rule maxLiveUntil(SEQ)      => SEQ +Int #maxEntryTtl -Int 1
     
+    // Executable tags have protocol-enforced storage invariants.
+    syntax Bool ::= isExecutableTagKey(ScVal) [function, total]
+    rule isExecutableTagKey(ScExecutableTag(_)) => true
+    rule isExecutableTagKey(_) => false [owise]
+
+    syntax InternalInstr ::= validatePutContractData(StorageType)
+                           | validateTagHash(Bytes)
+                           | "validateDelContractData"
+
+    rule <instrs> validatePutContractData(_) => .K ... </instrs>
+         <hostStack> KEY : _VAL : _S </hostStack>
+      requires notBool isExecutableTagKey(KEY)
+
+    rule <instrs> validatePutContractData(T) => #throw(ErrStorage, InvalidInput) ... </instrs>
+         <hostStack> ScExecutableTag(_) : _VAL : _S </hostStack>
+      requires T =/=K #persistent
+
+    rule <instrs> validatePutContractData(#persistent) => validateTagHash(HASH) ... </instrs>
+         <hostStack> ScExecutableTag(_) : ScBytes(HASH) : _S </hostStack>
+
+    rule <instrs> validatePutContractData(#persistent) => #throw(ErrStorage, InvalidInput) ... </instrs>
+         <hostStack> ScExecutableTag(_) : _VAL : _S </hostStack>
+      [owise]
+
+    rule <instrs> validateTagHash(HASH) => #throw(ErrObject, UnexpectedSize) ... </instrs>
+      requires lengthBytes(HASH) =/=Int 32
+    rule <instrs> validateTagHash(HASH) => .K ... </instrs>
+         <contractCode> <codeHash> HASH </codeHash> ... </contractCode>
+      requires lengthBytes(HASH) ==Int 32
+    rule <instrs> validateTagHash(_) => #throw(ErrStorage, MissingValue) ... </instrs> [owise]
+
+    rule <instrs> validateDelContractData => #throw(ErrStorage, InvalidAction) ... </instrs>
+         <hostStack> ScExecutableTag(_) : _S </hostStack>
+    rule <instrs> validateDelContractData => .K ... </instrs>
+         <hostStack> KEY : _S </hostStack>
+      requires notBool isExecutableTagKey(KEY)
+
+    rule [getContractData-missing]:
+        <instrs> getContractData(_) => #throw(ErrStorage, MissingValue) ... </instrs> [owise]
+
+    rule [hostfun-create-executable-tag]:
+        <instrs> hostCallAux("l", "h") => allocObject(ScExecutableTag(TAG)) ~> returnHostVal ... </instrs>
+        <hostStack> ScString(TAG) : S => S </hostStack>
+
+    rule [hostfun-create-executable-tag-type]:
+        <instrs> hostCallAux("l", "h") => #throw(ErrValue, UnexpectedType) ... </instrs> [owise]
+
+    // Komet's existing authorization assumption is unchanged: deployer auth is
+    // not modelled. IDs, executable checks, constructor execution and rollback are.
+    rule [hostfun-create-contract-with-constructor]:
+        <instrs> hostCallAux("l", "e")
+              => createContractInput(DEPLOYER, Wasm(HASH), SALT, ARGS) ... </instrs>
+        <hostStack> ScAddress(DEPLOYER) : ScBytes(HASH) : ScBytes(SALT) : ScVec(ARGS) : S => S </hostStack>
+
+    rule [hostfun-create-external-ref-contract]:
+        <instrs> hostCallAux("l", "i")
+              => createContractInput(DEPLOYER, ExternalRef(OWNER, TAG), SALT, ARGS) ... </instrs>
+        <hostStack> ScAddress(DEPLOYER) : ScAddress(OWNER) : ScExecutableTag(TAG)
+                 : ScBytes(SALT) : ScVec(ARGS) : S => S </hostStack>
+
+    rule [hostfun-create-contract-type]:
+        <instrs> hostCallAux("l", FN) => #throw(ErrValue, UnexpectedType) ... </instrs>
+      requires FN ==String "e" orBool FN ==String "i"
+      [owise]
+
+    syntax Bool ::= plainAddress(Address) [function, total]
+    rule plainAddress(Account(A)) => lengthBytes(A) ==Int 32
+    rule plainAddress(Contract(A)) => lengthBytes(A) ==Int 32
+    rule plainAddress(_) => false [owise]
+
+    syntax Bytes ::= deploymentAddressXdr(Address) [function, total]
+    rule deploymentAddressXdr(Account(A)) => Int2Bytes(4, 0, BE) +Bytes Int2Bytes(4, 0, BE) +Bytes A
+    rule deploymentAddressXdr(Contract(A)) => Int2Bytes(4, 1, BE) +Bytes A
+    rule deploymentAddressXdr(_) => .Bytes [owise]
+
+    syntax ContractId ::= deployedContractId(Bytes, Address, Bytes) [function, total]
+    rule deployedContractId(NETWORK, DEPLOYER, SALT)
+      => Contract(#sha256(Int2Bytes(4, 8, BE) +Bytes NETWORK +Bytes Int2Bytes(4, 0, BE)
+                          +Bytes deploymentAddressXdr(DEPLOYER) +Bytes SALT))
+
+    syntax InternalInstr ::= createContractInput(Address, ContractExecutable, Bytes, List)
+    rule [createContractInput]:
+        <instrs> createContractInput(DEPLOYER, EXEC, SALT, ARGS)
+              => #waitCommands ~> returnCallResult ... </instrs>
+        <callee> FROM </callee>
+        <ledgerNetworkId> NETWORK </ledgerNetworkId>
+        <k> (.K => prepareCreation(FROM, deployedContractId(NETWORK, DEPLOYER, SALT), EXEC, ARGS)) ... </k>
+      requires plainAddress(DEPLOYER) andBool lengthBytes(SALT) ==Int 32 andBool lengthBytes(NETWORK) ==Int 32
+
+    rule [createContractInput-invalid]:
+        <instrs> createContractInput(_, _, _, _) => #throw(ErrObject, UnexpectedSize) ... </instrs> [owise]
+
+    syntax InternalCmd ::= prepareCreation(Address, ContractId, ContractExecutable, List)
+                         | createContractChecked(Address, ContractId, ContractExecutable, List, Int)
+                         | invokeConstructor(Address, ContractId, List, Int)
+                         | finishCreation(ContractId)
+
+    rule [prepareCreation-duplicate]:
+        <k> prepareCreation(_, ID, _, _) => pushStack(Error(ErrStorage, ExistingValue)) ... </k>
+        <contract> <contractId> ID </contractId> ... </contract>
+      [priority(40)]
+
+    rule [prepareCreation-wasm]:
+        <k> prepareCreation(FROM, ID, Wasm(HASH), ARGS)
+         => createContractChecked(FROM, ID, Wasm(HASH), ARGS, PROTO) ... </k>
+        <contractCode> <codeHash> HASH </codeHash> <codeProtocol> PROTO </codeProtocol> ... </contractCode>
+      requires lengthBytes(HASH) ==Int 32
+
+    rule [prepareCreation-bad-hash]:
+        <k> prepareCreation(_, _, Wasm(HASH), _) => pushStack(Error(ErrObject, UnexpectedSize)) ... </k>
+      requires lengthBytes(HASH) =/=Int 32
+      [priority(30)]
+
+    rule [prepareCreation-reference]:
+        <k> prepareCreation(FROM, ID, ExternalRef(OWNER, TAG), ARGS)
+         => createContractChecked(FROM, ID, ExternalRef(OWNER, TAG), ARGS, PROTO) ... </k>
+        <contractData> ... #skey(OWNER, #persistent, ScExecutableTag(TAG)) |-> #sval(ScBytes(HASH), _) ... </contractData>
+        <contractCode> <codeHash> HASH </codeHash> <codeProtocol> PROTO </codeProtocol> ... </contractCode>
+      requires plainAddress(OWNER) andBool lengthBytes(HASH) ==Int 32
+
+    rule [prepareCreation-missing]:
+        <k> prepareCreation(_, _, _, _) => pushStack(Error(ErrStorage, MissingValue)) ... </k> [owise]
+
+    rule [createContractChecked-duplicate]:
+        <k> createContractChecked(_, ID, _, _, _) => pushStack(Error(ErrStorage, ExistingValue)) ... </k>
+        <contract> <contractId> ID </contractId> ... </contract>
+
+    rule [createContractChecked-new]:
+        <k> createContractChecked(FROM, ID, EXEC, ARGS, PROTO)
+         => pushWorldState ~> insertContract(ID, EXEC)
+         ~> invokeConstructor(FROM, ID, ARGS, PROTO) ~> finishCreation(ID) ... </k>
+      [owise]
+
+    syntax InternalCmd ::= insertContract(ContractId, ContractExecutable)
+    rule [insertContract]:
+        <k> insertContract(ID, EXEC) => .K ... </k>
+        (.Bag => <contract>
+          <contractId> ID </contractId>
+          <contractExecutable> EXEC </contractExecutable>
+          <contractLiveUntil> minLiveUntil(#persistent, SEQ) </contractLiveUntil>
+          ...
+        </contract>)
+        <ledgerSequenceNumber> SEQ </ledgerSequenceNumber>
+
+    rule [invokeConstructor-legacy-empty]:
+        <k> invokeConstructor(_, _, .List, PROTO) => pushStack(Void) ... </k>
+      requires PROTO <Int 22
+    rule [invokeConstructor-legacy-arguments]:
+        <k> invokeConstructor(_, _, ARGS, PROTO) => pushStack(Error(ErrContext, InvalidAction)) ... </k>
+      requires PROTO <Int 22 andBool size(ARGS) >Int 0
+    rule [invokeConstructor]:
+        <k> invokeConstructor(FROM, ID, ARGS, PROTO) => callContract(FROM, ID, "__constructor", ARGS) ... </k>
+      requires PROTO >=Int 22
+
+    rule [finishCreation-success]:
+        <k> finishCreation(ID) => dropWorldState ... </k>
+        <hostStack> Void : S => ScAddress(ID) : S </hostStack>
+    rule [finishCreation-error]:
+        <k> finishCreation(_) => popWorldState ... </k>
+        <hostStack> Error(ET, CODE) : S
+                 => (#if isRecoverable(ET, CODE) #then Error(ErrContext, InvalidAction) #else Error(ET, CODE) #fi) : S </hostStack>
+    rule [finishCreation-nonvoid]:
+        <k> finishCreation(_) => popWorldState ... </k>
+        <hostStack> _RES:ScVal : S => Error(ErrValue, UnexpectedType) : S </hostStack>
+      [owise]
+
+    rule [extendContractCodeTtl-reference]:
+        <instrs> extendContractCodeTtl(CONTRACT)
+              => pushStack(ScExecutableTag(TAG)) ~> extendContractDataTtl(OWNER, #persistent)
+              ~> pushStack(U32(EXTEND_TO)) ~> pushStack(U32(THRESHOLD)) ~> extendCodeTtl(HASH) ... </instrs>
+        <hostStack> U32(THRESHOLD) : U32(EXTEND_TO) : _S </hostStack>
+        <contract> <contractId> CONTRACT </contractId> <contractExecutable> ExternalRef(OWNER, TAG) </contractExecutable> ... </contract>
+        <contractData> ... #skey(OWNER, #persistent, ScExecutableTag(TAG)) |-> #sval(ScBytes(HASH), _) ... </contractData>
+
+    rule [extendContractCodeTtl-asset]:
+        <instrs> extendContractCodeTtl(CONTRACT) => .K ... </instrs>
+        <hostStack> _THRESHOLD : _EXTEND_TO : S => S </hostStack>
+        <contract> <contractId> CONTRACT </contractId> <contractExecutable> StellarAsset </contractExecutable> ... </contract>
+
+    rule [extendContractCodeTtl-missing]:
+        <instrs> extendContractCodeTtl(_) => #throw(ErrStorage, MissingValue) ... </instrs> [owise]
+
+    rule [hostfun-l-e-checked-inputs]:
+        <instrs> hostCall("l", "e", [ i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => loadArgs(4) ~> hostCallAux("l", "e") ... </instrs>
+        <locals> 0 |-> <i64> V0 1 |-> <i64> V1 2 |-> <i64> V2 3 |-> <i64> V3 </locals>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+      requires hostTypedRef(HostVal(V0), 77, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V1), 72, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V2), 72, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V3), 75, OBJS, RELS)
+
+    rule [hostfun-l-e-invalid-inputs]:
+        <instrs> hostCall("l", "e", [ i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+      [priority(60)]
+
+    rule [hostfun-l-h-checked-inputs]:
+        <instrs> hostCall("l", "h", [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => loadArgs(1) ~> hostCallAux("l", "h") ... </instrs>
+        <locals> 0 |-> <i64> V0 </locals>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+      requires hostTypedRef(HostVal(V0), 73, OBJS, RELS)
+
+    rule [hostfun-l-h-invalid-inputs]:
+        <instrs> hostCall("l", "h", [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+      [priority(60)]
+
+    rule [hostfun-l-i-checked-inputs]:
+        <instrs> hostCall("l", "i", [ i64 i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => loadArgs(5) ~> hostCallAux("l", "i") ... </instrs>
+        <locals> 0 |-> <i64> V0 1 |-> <i64> V1 2 |-> <i64> V2 3 |-> <i64> V3 4 |-> <i64> V4 </locals>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+      requires hostTypedRef(HostVal(V0), 77, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V1), 77, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V2), 79, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V3), 72, OBJS, RELS)
+       andBool hostTypedRef(HostVal(V4), 75, OBJS, RELS)
+
+    rule [hostfun-l-i-invalid-inputs]:
+        <instrs> hostCall("l", "i", [ i64 i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+      [priority(60)]
+
 endmodule
 ```

@@ -5,11 +5,13 @@ requires "../configuration.md"
 requires "../switch.md"
 requires "../wasm-ops.md"
 requires "integer.md"
+requires "arguments.md"
 
 module HOST-BUFFER
     imports CONFIG-OPERATIONS
     imports WASM-OPERATIONS
     imports HOST-INTEGER
+    imports HOST-ARGUMENTS
     imports SWITCH-SYNTAX
 
 ```
@@ -28,6 +30,118 @@ module HOST-BUFFER
        andBool B_POS <=Int lengthBytes(BYTES)
        andBool 0 <=Int LEN
        andBool B_POS +Int LEN <=Int lengthBytes(BYTES)
+```
+
+## string_copy_to_linear_memory and string_len
+
+String offsets and lengths count bytes, including non-ASCII bytes. Validate the
+source range before touching guest memory, matching the host's error ordering.
+
+```k
+    rule [hostfun-string-len]:
+        <instrs> hostCall("b", "k", [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => loadArgs(1) ~> hostCallAux("b", "k") ... </instrs>
+        <locals> 0 |-> < i64 > V </locals>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+      requires getTag(HostVal(V)) ==Int 73 andBool getMinor(HostVal(V)) ==Int 0
+       andBool hostKnownRef(HostVal(V), OBJS, RELS)
+
+    rule [hostfun-string-len-invalid]:
+        <instrs> hostCall("b", "k", [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+      [priority(60)]
+
+    rule [hostfun-string-copy]:
+        <instrs> hostCall("b", "g", [ i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => loadArgs(4) ~> hostCallAux("b", "g") ... </instrs>
+        <locals> 0 |-> < i64 > V 1 |-> < i64 > START 2 |-> < i64 > POS 3 |-> < i64 > LEN </locals>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+      requires getTag(HostVal(V)) ==Int 73 andBool getMinor(HostVal(V)) ==Int 0
+       andBool hostKnownRef(HostVal(V), OBJS, RELS)
+       andBool hostU32(HostVal(START)) andBool hostU32(HostVal(POS)) andBool hostU32(HostVal(LEN))
+
+    rule [hostfun-string-copy-invalid]:
+        <instrs> hostCall("b", "g", [ i64 i64 i64 i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+      [priority(60)]
+
+    rule [hostCallAux-string-len]:
+        <instrs> hostCallAux("b", "k") => toSmall(U32(lengthBytes(String2Bytes(STR)))) ... </instrs>
+        <hostStack> ScString(STR) : S => S </hostStack>
+
+    rule [hostCallAux-string-len-type]:
+        <instrs> hostCallAux("b", "k") => #throw(ErrValue, InvalidInput) ... </instrs>
+        <hostStack> _:ScVal : S => S </hostStack>
+      [owise]
+
+    rule [hostCallAux-string-copy]:
+        <instrs> hostCallAux("b", "g")
+              => #stringCopyToMemory(POS, substrBytes(String2Bytes(STR), START, START +Int LEN))
+              ...
+        </instrs>
+        <hostStack> ScString(STR) : U32(START) : U32(POS) : U32(LEN) : S => S </hostStack>
+      requires START +Int LEN <Int 4294967296
+       andBool START +Int LEN <=Int lengthBytes(String2Bytes(STR))
+
+    rule [hostCallAux-string-copy-overflow]:
+        <instrs> hostCallAux("b", "g") => #throw(ErrValue, ArithDomain) ... </instrs>
+        <hostStack> ScString(_) : U32(START) : U32(_) : U32(LEN) : S => S </hostStack>
+      requires START +Int LEN >=Int 4294967296
+
+    rule [hostCallAux-string-copy-source-bounds]:
+        <instrs> hostCallAux("b", "g") => #throw(ErrObject, IndexBounds) ... </instrs>
+        <hostStack> ScString(STR) : U32(START) : U32(_) : U32(LEN) : S => S </hostStack>
+      requires START +Int LEN <Int 4294967296
+       andBool START +Int LEN >Int lengthBytes(String2Bytes(STR))
+
+    rule [hostCallAux-string-copy-type]:
+        <instrs> hostCallAux("b", "g") => #throw(ErrValue, InvalidInput) ... </instrs>
+        <hostStack> _:ScVal : _:ScVal : _:ScVal : _:ScVal : S => S </hostStack>
+      [owise]
+
+    syntax InternalInstr ::= #stringCopyToMemory(Int, Bytes) [symbol(stringCopyToMemory)]
+
+    rule [string-copy-memory]:
+        <instrs> #stringCopyToMemory(POS, BS) => toSmall(Void) ... </instrs>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst>
+          <modIdx> MODIDX </modIdx>
+          <exports> ... MEMNAME |-> 0 ... </exports>
+          <memAddrs> 0 |-> MEMADDR </memAddrs>
+          ...
+        </moduleInst>
+        <memInst>
+          <mAddr> MEMADDR </mAddr>
+          <msize> SIZE </msize>
+          <mdata> DATA => #setBytesRange(DATA, POS, BS) </mdata>
+          ...
+        </memInst>
+      requires MEMNAME ==K #quoteUnparseWasmString("memory")
+       andBool POS +Int lengthBytes(BS) <=Int SIZE *Int #pageSize()
+      [preserves-definedness]
+
+    rule [string-copy-memory-bounds]:
+        <instrs> #stringCopyToMemory(POS, BS) => #throw(ErrWasmVm, IndexBounds) ... </instrs>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst>
+          <modIdx> MODIDX </modIdx>
+          <exports> ... MEMNAME |-> 0 ... </exports>
+          <memAddrs> 0 |-> MEMADDR </memAddrs>
+          ...
+        </moduleInst>
+        <memInst>
+          <mAddr> MEMADDR </mAddr>
+          <msize> SIZE </msize>
+          ...
+        </memInst>
+      requires MEMNAME ==K #quoteUnparseWasmString("memory")
+       andBool POS +Int lengthBytes(BS) >Int SIZE *Int #pageSize()
+
+    rule [string-copy-memory-missing]:
+        <instrs> #stringCopyToMemory(_, _) => #throw(ErrWasmVm, MissingValue) ... </instrs>
+      [owise]
 ```
 
 ## bytes_copy_from_linear_memory

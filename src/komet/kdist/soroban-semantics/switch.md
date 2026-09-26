@@ -12,6 +12,7 @@ and `#waitCommands` statements are utilized.
 
 ```k
 requires "configuration.md"
+requires "host/arguments.md"
 
 module SWITCH-SYNTAX
 
@@ -27,6 +28,7 @@ endmodule
 module SWITCH
     imports SWITCH-SYNTAX
     imports CONFIG-OPERATIONS
+    imports HOST-ARGUMENTS
 ```
 
 - `#endWasm` marks the end of the execution of Wasm instructions within a contract call.
@@ -44,6 +46,7 @@ module SWITCH
          ~> popWorldState
             ...
         </k>
+        <activeContracts> (ListItem(_) => .List) ... </activeContracts>
         <instrs> .K </instrs>
         <hostStack> (Error(_,_) #as ERR) : _ => ERR : .HostStack </hostStack>
       [priority(40)]
@@ -56,9 +59,40 @@ module SWITCH
             ...
         </k>
         <instrs> .K </instrs>
+        <activeContracts> (ListItem(_) => .List) ... </activeContracts>
         <relativeObjects> RELS </relativeObjects>
         <valstack> STACK </valstack>
       [priority(50)]
+
+    // Validate the raw guest result before HostVal2ScVal's fallback can erase
+    // an invalid payload. Leave #endWasm queued so normal error tracing and
+    // rollback apply, including constructor error sanitization.
+    rule [endWasm-invalid-result]:
+        <k> #endWasm ... </k>
+        <instrs> .K </instrs>
+        <valstack> <i64> RESULT : .ValStack </valstack>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+        <hostStack> S => Error(ErrValue,
+                         #if isObject(HostVal(RESULT)) andBool getMinor(HostVal(RESULT)) ==Int 0
+                         #then InvalidInput #else UnexpectedType #fi) : S </hostStack>
+      requires notBool hostValidVal(HostVal(RESULT), OBJS, RELS)
+      [priority(41)]
+
+    // A returned Contract error fails the frame; a guest cannot manufacture
+    // host errors (including unrecoverable budget/storage errors).
+    rule [endWasm-returned-error]:
+        <k> #endWasm ... </k>
+        <instrs> .K </instrs>
+        <valstack> <i64> RESULT : .ValStack </valstack>
+        <hostObjects> OBJS </hostObjects>
+        <relativeObjects> RELS </relativeObjects>
+        <hostStack> S => (#if getMinor(HostVal(RESULT)) ==Int 0
+                          #then fromSmall(HostVal(RESULT))
+                          #else Error(ErrContext, InvalidAction) #fi) : S </hostStack>
+      requires getTag(HostVal(RESULT)) ==Int 3
+       andBool hostValidVal(HostVal(RESULT), OBJS, RELS)
+      [priority(41)]
 
     rule [endWasm-trap]:
         <k> #endWasm ... </k>

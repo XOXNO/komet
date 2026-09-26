@@ -56,6 +56,13 @@ semantics.
          ~> #endWasm
             ...
         </k>
+        <activeContracts> ACTIVE => ListItem(TO) ACTIVE </activeContracts>
+      requires notBool (TO in ACTIVE)
+
+    rule [callContract-reentry]:
+        <k> callContract(_, TO, _:WasmStringToken, _) => pushStack(Error(ErrContext, InvalidAction)) ... </k>
+        <activeContracts> ACTIVE </activeContracts>
+      requires TO in ACTIVE
 
     // Looks up the callee's code and instantiates a fresh Wasm module for it, then delegates to `mkCall`
     // to actually invoke the requested function once that instance exists.
@@ -67,7 +74,7 @@ semantics.
         </k>
         <contract>
           <contractId> TO </contractId>
-          <wasmHash> HASH </wasmHash>
+          <contractExecutable> Wasm(HASH) </contractExecutable>
           ...
         </contract>
         <contractCode>
@@ -77,16 +84,19 @@ semantics.
         </contractCode>
         <instrs> .K </instrs>
 
-    // rule [callContractAux-not-contract]:
-    //     <k> callContractAux(_, TO, _:WasmString, _)
-    //             => #exception(b"not a contract: " +Bytes TO) ...
-    //     </k>
-    //     <account>
-    //       <address> TO </address>
-    //       <code> .Code </code>
-    //       ...
-    //     </account>
-    //     <instrs> .K </instrs>
+    rule [callContractAux-reference]:
+        <k> callContractAux(FROM, TO, FUNCNAME, ARGS)
+         => newWasmInstance(TO, CODE) ~> mkCall(FROM, TO, FUNCNAME, ARGS) ... </k>
+        <contract> <contractId> TO </contractId> <contractExecutable> ExternalRef(OWNER, TAG) </contractExecutable> ... </contract>
+        <contractData> ... #skey(OWNER, #persistent, ScExecutableTag(TAG)) |-> #sval(ScBytes(HASH), _) ... </contractData>
+        <contractCode> <codeHash> HASH </codeHash> <codeWasm> CODE </codeWasm> ... </contractCode>
+        <instrs> .K </instrs>
+      requires lengthBytes(HASH) ==Int 32
+
+    rule [callContractAux-missing]:
+        <k> callContractAux(_, _, _, _) => pushStack(Error(ErrStorage, MissingValue)) ... </k>
+        <instrs> .K </instrs>
+      [owise]
 
     syntax WasmCell
     syntax InternalCmd ::= newWasmInstance   (ContractId, ModuleDecl)     [symbol(newWasmInstance)]
@@ -145,13 +155,64 @@ semantics.
               <funcAddrs> FUNCADDRS </funcAddrs>
               ...
             </moduleInst>
+            <funcDef>
+              <fAddr> FADDR </fAddr>
+              <fType> [ DOMAIN ] -> [ i64 .ValTypes ] </fType>
+              ...
+            </funcDef>
             ...
           </wasm>
           <contractModIdx> MODIDX:Int </contractModIdx>
           ...
         </callState>
         requires isListIndex(FUNCIDX, FUNCADDRS)
+         andBool FADDR ==Int (FUNCADDRS {{ FUNCIDX }} orDefault -1)
+         andBool size(ARGS) ==Int lengthValTypes(DOMAIN)
+         andBool size(ARGS) <=Int 32 andBool i64Parameters(DOMAIN)
       [priority(60)]
+
+    syntax Bool ::= i64Parameters(ValTypes) [function, total]
+    rule i64Parameters(.ValTypes) => true
+    rule i64Parameters(i64 REST) => i64Parameters(REST)
+    rule i64Parameters(_) => false [owise]
+
+    rule [mkCall-too-many-arguments]:
+        <k> mkCall(_, _, _:WasmStringToken, ARGS) => pushStack(Error(ErrWasmVm, InvalidInput)) ... </k>
+      requires size(ARGS) >Int 32
+      [priority(40)]
+
+    rule [mkCall-wrong-arity]:
+        <k> mkCall(_, _, FUNCNAME:WasmStringToken, ARGS) => pushStack(Error(ErrWasmVm, UnexpectedSize)) ... </k>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst> <modIdx> MODIDX </modIdx> <exports> ... FUNCNAME |-> IDX:Int ... </exports> <funcAddrs> ADDRS </funcAddrs> ... </moduleInst>
+        <funcDef> <fAddr> FADDR </fAddr> <fType> [ DOMAIN ] -> [ RANGE ] </fType> ... </funcDef>
+      requires isListIndex(IDX, ADDRS) andBool FADDR ==Int (ADDRS {{ IDX }} orDefault -1)
+       andBool (size(ARGS) =/=Int lengthValTypes(DOMAIN) orBool lengthValTypes(RANGE) =/=Int 1)
+
+    rule [mkCall-wrong-type]:
+        <k> mkCall(_, _, FUNCNAME:WasmStringToken, ARGS) => pushStack(Error(ErrWasmVm, UnexpectedType)) ... </k>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst> <modIdx> MODIDX </modIdx> <exports> ... FUNCNAME |-> IDX:Int ... </exports> <funcAddrs> ADDRS </funcAddrs> ... </moduleInst>
+        <funcDef> <fAddr> FADDR </fAddr> <fType> [ DOMAIN ] -> [ RANGE ] </fType> ... </funcDef>
+      requires isListIndex(IDX, ADDRS) andBool FADDR ==Int (ADDRS {{ IDX }} orDefault -1)
+       andBool size(ARGS) ==Int lengthValTypes(DOMAIN) andBool lengthValTypes(RANGE) ==Int 1
+       andBool notBool (i64Parameters(DOMAIN) andBool i64Parameters(RANGE))
+
+    // A protocol-22+ absent constructor is a no-op only for zero arguments.
+    rule [mkCall-default-constructor]:
+        <k> mkCall(_, _, FUNCNAME:WasmStringToken, .List) => .K ... </k>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst> <modIdx> MODIDX </modIdx> <exports> EXPORTS </exports> ... </moduleInst>
+        <valstack> _ => <i64> 2 : .ValStack </valstack>
+      requires wasmString2StringStripped(FUNCNAME) ==String "__constructor"
+       andBool notBool (FUNCNAME in_keys(EXPORTS))
+
+    rule [mkCall-missing]:
+        <k> mkCall(_, _, FUNCNAME:WasmStringToken, ARGS) => pushStack(Error(ErrWasmVm, MissingValue)) ... </k>
+        <contractModIdx> MODIDX:Int </contractModIdx>
+        <moduleInst> <modIdx> MODIDX </modIdx> <exports> EXPORTS </exports> ... </moduleInst>
+      requires notBool (FUNCNAME in_keys(EXPORTS))
+       andBool (wasmString2StringStripped(FUNCNAME) =/=String "__constructor" orBool size(ARGS) >Int 0)
 
     syntax InternalInstr ::= pushArgs(List)      [symbol(pushArgs)]
                            | pushArg(HostVal)    [symbol(pushArg)]

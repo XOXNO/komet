@@ -58,6 +58,8 @@ various contexts:
         | I32(Int)                                 [symbol(SCVal:I32)]
         | U64(Int)                                 [symbol(SCVal:U64)]
         | I64(Int)                                 [symbol(SCVal:I64)]
+        | ScTimepoint(Int)                         [symbol(SCVal:Timepoint)]
+        | ScDuration(Int)                          [symbol(SCVal:Duration)]
         | U128(Int)                                [symbol(SCVal:U128)]
         | I128(Int)                                [symbol(SCVal:I128)]
         | U256(Int)                                [symbol(SCVal:U256)]
@@ -68,8 +70,10 @@ various contexts:
         | Symbol(String)                           [symbol(SCVal:Symbol)]
         | ScBytes(Bytes)                           [symbol(SCVal:Bytes)]
         | ScString(String)                         [symbol(SCVal:String)]
+        | ScExecutableTag(String)                  [symbol(SCVal:ExecutableTag)]
 
     syntax Address ::= AccountId | ContractId
+    syntax Address ::= MuxedAccount(Int, Bytes)   [symbol(MuxedAccount)] // id, ed25519
     syntax AccountId  ::= Account(Bytes)          [symbol(AccountId)]
     syntax ContractId ::= Contract(Bytes)         [symbol(ContractId)]
 
@@ -120,7 +124,7 @@ module HOST-OBJECT
                   | isRelativeObjectHandle(HostVal)     [function, total, symbol(isRelativeObjectHandle)]
  // --------------------------------------------------------------------------------
     rule isObject(V)               => isObjectTag(getTag(V))
-    rule isObjectTag(TAG)          => 64 <=Int TAG andBool TAG <=Int 77
+    rule isObjectTag(TAG)          => 64 <=Int TAG andBool TAG <=Int 79
     rule isRelativeObjectHandle(V) => getMajor(V) &Int 1 ==Int 0
 
     syntax Int ::= indexToHandle(Int, Bool)       [function, total, symbol(indexToHandle)]
@@ -157,6 +161,10 @@ module HOST-OBJECT
     rule getTag(U64(I))        => 64    requires notBool( I <=Int #maxU64small )
     rule getTag(I64(I))        => 7     requires          #minI64small <=Int I andBool I <=Int #maxI64small
     rule getTag(I64(I))        => 65    requires notBool( #minI64small <=Int I andBool I <=Int #maxI64small )
+    rule getTag(ScTimepoint(I)) => 8    requires inRangeInt(i56, Unsigned, I)
+    rule getTag(ScTimepoint(I)) => 66   requires notBool inRangeInt(i56, Unsigned, I)
+    rule getTag(ScDuration(I))  => 9    requires inRangeInt(i56, Unsigned, I)
+    rule getTag(ScDuration(I))  => 67   requires notBool inRangeInt(i56, Unsigned, I)
     rule getTag(U128(I))       => 10    requires          I <=Int #maxU64small
     rule getTag(U128(I))       => 68    requires notBool( I <=Int #maxU64small ) // U64small and U128small have the same width
     rule getTag(I128(I))       => 11    requires          #minI64small <=Int I andBool I <=Int #maxI64small
@@ -167,7 +175,10 @@ module HOST-OBJECT
     rule getTag(I256(I))       => 71    requires notBool( #minI64small <=Int I andBool I <=Int #maxI64small )
     rule getTag(ScVec(_))      => 75
     rule getTag(ScMap(_))      => 76
-    rule getTag(ScAddress(_))  => 77
+    rule getTag(ScAddress(Account(_)))         => 77
+    rule getTag(ScAddress(Contract(_)))        => 77
+    rule getTag(ScAddress(MuxedAccount(_, _))) => 78
+    rule getTag(ScExecutableTag(_))           => 79
     rule getTag(Symbol(BS))    => 14    requires lengthString(BS) <=Int 9
     rule getTag(Symbol(BS))    => 74    requires lengthString(BS) >Int  9
     rule getTag(ScBytes(_))    => 72
@@ -177,6 +188,8 @@ module HOST-OBJECT
  // -------------------------------------------------------------------------------
     rule getTagWithFlag(true, U64(_))    => 64
     rule getTagWithFlag(true, I64(_))    => 65
+    rule getTagWithFlag(true, ScTimepoint(_)) => 66
+    rule getTagWithFlag(true, ScDuration(_))  => 67
     rule getTagWithFlag(true, U128(_))   => 68
     rule getTagWithFlag(true, I128(_))   => 69
     rule getTagWithFlag(true, Symbol(_)) => 74
@@ -280,6 +293,14 @@ module HOST-OBJECT
       requires getTag(VAL) ==Int 7
        andBool definedSigned(i56, getBody(VAL))
 
+    rule fromSmall(VAL) => ScTimepoint(getBody(VAL))
+      requires getTag(VAL) ==Int 8
+       andBool inRangeInt(i56, Unsigned, getBody(VAL))
+
+    rule fromSmall(VAL) => ScDuration(getBody(VAL))
+      requires getTag(VAL) ==Int 9
+       andBool inRangeInt(i56, Unsigned, getBody(VAL))
+
     rule fromSmall(VAL) => U128(getBody(VAL))      requires getTag(VAL) ==Int 10
 
     rule fromSmall(VAL) => I128(#signed(i56, getBody(VAL)))
@@ -317,6 +338,8 @@ module HOST-OBJECT
     rule toSmall(I64(I))        => fromBodyAndTag(#unsigned(i56, I), 7)
       requires #minI64small <=Int I andBool I <=Int #maxI64small
        andBool definedUnsigned(i56, I)
+    rule toSmall(ScTimepoint(I)) => fromBodyAndTag(I, 8) requires inRangeInt(i56, Unsigned, I)
+    rule toSmall(ScDuration(I))  => fromBodyAndTag(I, 9) requires inRangeInt(i56, Unsigned, I)
     rule toSmall(U128(I))       => fromBodyAndTag(I, 10)              requires I <=Int #maxU64small
     rule toSmall(I128(I))       => fromBodyAndTag(#unsigned(i56, I), 11)
       requires #minI64small <=Int I andBool I <=Int #maxI64small
@@ -456,6 +479,8 @@ For scalar types the comparison is straightforward.
     rule compare(I32(A),  I32(B))  => compareInt(A, B)
     rule compare(U64(A),  U64(B))  => compareInt(A, B)
     rule compare(I64(A),  I64(B))  => compareInt(A, B)
+    rule compare(ScTimepoint(A), ScTimepoint(B)) => compareInt(A, B)
+    rule compare(ScDuration(A), ScDuration(B))   => compareInt(A, B)
     rule compare(U128(A), U128(B)) => compareInt(A, B)
     rule compare(I128(A), I128(B)) => compareInt(A, B)
     rule compare(U256(A), U256(B)) => compareInt(A, B)
@@ -464,6 +489,7 @@ For scalar types the comparison is straightforward.
     rule compare(Symbol(A), Symbol(B))       => compareString(A, B)
     rule compare(ScBytes(A), ScBytes(B))     => compareBytes(A, B)
     rule compare(ScString(A), ScString(B))   => compareString(A, B)
+    rule compare(ScExecutableTag(A), ScExecutableTag(B)) => compareString(A, B)
 ```
 
 For container types, the comparison is recursive as defined in `compareVec` and `compareMap`.
@@ -492,6 +518,12 @@ For container types, the comparison is recursive as defined in `compareVec` and 
     rule compareAddress(Contract(_), Account(_))  => Greater
     rule compareAddress(Contract(A), Contract(B)) => compareBytes(A, B)
     rule compareAddress(Account(A),  Account(B))  => compareBytes(A, B)
+    rule compareAddress(Account(_), MuxedAccount(_, _))  => Less
+    rule compareAddress(Contract(_), MuxedAccount(_, _)) => Less
+    rule compareAddress(MuxedAccount(_, _), Account(_))  => Greater
+    rule compareAddress(MuxedAccount(_, _), Contract(_)) => Greater
+    rule compareAddress(MuxedAccount(AID, A), MuxedAccount(BID, B))
+      => #if AID ==Int BID #then compareBytes(A, B) #else compareInt(AID, BID) #fi
 
     syntax Ordering ::= compareBytes(Bytes, Bytes)       [function, total, symbol(compareBytes)]
                       | compareString(String, String)    [function, total, symbol(compareString)]
@@ -576,8 +608,8 @@ corresponding values.
     rule ScValTypeOrd(I32(_))        => 4
     rule ScValTypeOrd(U64(_))        => 5
     rule ScValTypeOrd(I64(_))        => 6
-    // Timepoint                     => 7
-    // Duration                      => 8
+    rule ScValTypeOrd(ScTimepoint(_)) => 7
+    rule ScValTypeOrd(ScDuration(_))  => 8
     rule ScValTypeOrd(U128(_))       => 9
     rule ScValTypeOrd(I128(_))       => 10
     rule ScValTypeOrd(U256(_))       => 11
@@ -591,6 +623,7 @@ corresponding values.
     // ContractInstance              => 19
     // LedgerKeyContractInstance     => 20
     // LedgerKeyNonce                => 21
+    rule ScValTypeOrd(ScExecutableTag(_)) => 22
 ```
 
 ## Sorted key lists for ScMap

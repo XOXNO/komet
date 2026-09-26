@@ -9,6 +9,10 @@ module CONFIG
     imports MAP
     imports WASM
 
+    syntax ContractExecutable ::= Wasm(Bytes) [symbol(ContractExecutable:Wasm)]
+                                | "StellarAsset" [symbol(ContractExecutable:StellarAsset)]
+                                | ExternalRef(Address, String) [symbol(ContractExecutable:ExternalRef)]
+
     configuration
       <soroban>
         <k> .K </k>
@@ -39,13 +43,14 @@ module CONFIG
           <hostStack> .HostStack </hostStack>
           <hostObjects> .List </hostObjects> // List of ScVals
           <callStack> .List </callStack>
+          <activeContracts> .List </activeContracts>
           <interimStates> .List </interimStates>
         </host>
 
         <contracts>
           <contract multiplicity="*" type="Map">
             <contractId> Contract(.Bytes) </contractId>
-            <wasmHash> .Bytes </wasmHash>
+            <contractExecutable> Wasm(.Bytes) </contractExecutable>
 ```
 
 - `instanceStorage`: Instance storage is a map from user-provided keys (ScVal) to values (ScVal), and it is tied to the
@@ -85,6 +90,7 @@ module CONFIG
             <codeHash>      .Bytes         </codeHash>
             <codeLiveUntil> 0              </codeLiveUntil>
             <codeWasm>      #emptyModule() </codeWasm> 
+            <codeProtocol> 28 </codeProtocol>
           </contractCode>
         </contractCodes>
 ```
@@ -93,9 +99,16 @@ module CONFIG
     Accessible to contracts via the `get_ledger_sequence` host function.
     Set externally using `kasmer_set_ledger_sequence`.
 
+- `ledgerNetworkId`: The 32-byte network hash used for deployment addresses.
+    Fixtures default to zero; set the actual network hash with `setLedgerNetworkId`.
+- `codeProtocol`: Each uploaded module's protocol version controls constructor
+    compatibility. Text fixtures default to protocol 28; `uploadWasmWithProtocol`
+    supplies an explicit version.
+
 ```k
         <ledgerSequenceNumber> 0 </ledgerSequenceNumber>
         <ledgerTimestamp> 0 </ledgerTimestamp>
+        <ledgerNetworkId> Int2Bytes(32, 0, BE) </ledgerNetworkId>
 ```
 
 - `alwaysAllocate`: This cell controls the behavior of `allocObject` during property tests.
@@ -121,7 +134,7 @@ module CONFIG
     syntax StorageType ::= Durability
                          | "#instance"           [symbol(#instance)]
 
-    syntax StorageKey ::= #skey( ContractId , Durability , ScVal )   [symbol(StorageKey)]
+    syntax StorageKey ::= #skey( Address , Durability , ScVal )   [symbol(StorageKey)]
 
     syntax StorageVal ::= #sval( ScVal , Int )                       [symbol(StorageVal)]
 
@@ -212,28 +225,31 @@ These internal commands manages the call stack when calling and returning from a
 ```k
     syntax AccountsCellFragment
     syntax ContractsCellFragment
+    syntax ContractCodesCellFragment
 
-    syntax Accounts ::= "{" AccountsCellFragment "," ContractsCellFragment "," Map "}"
+    syntax Accounts ::= "{" AccountsCellFragment "," ContractsCellFragment "," Map "," ContractCodesCellFragment "}"
  // --------------------------------------------------------
 
     syntax InternalCmd ::= "pushWorldState"  [symbol(pushWorldState)]
  // ---------------------------------------
     rule [pushWorldState]:
          <k> pushWorldState => .K ... </k>
-         <interimStates> (.List => ListItem({ ACCTDATA , CONTRACTS , CTRDATA })) ... </interimStates>
+         <interimStates> (.List => ListItem({ ACCTDATA , CONTRACTS , CTRDATA , CODES })) ... </interimStates>
          <contracts> CONTRACTS </contracts>
          <accounts> ACCTDATA </accounts>
          <contractData> CTRDATA </contractData>
+         <contractCodes> CODES </contractCodes>
       [priority(60)]
 
     syntax InternalCmd ::= "popWorldState"  [symbol(popWorldState)]
  // --------------------------------------
     rule [popWorldState]:
          <k> popWorldState => .K ... </k>
-         <interimStates> (ListItem({ ACCTDATA , CONTRACTS , CTRDATA }) => .List) ... </interimStates>
+         <interimStates> (ListItem({ ACCTDATA , CONTRACTS , CTRDATA , CODES }) => .List) ... </interimStates>
          <contracts> _ =>  CONTRACTS </contracts>
          <accounts> _ => ACCTDATA </accounts>
          <contractData> _ => CTRDATA </contractData>
+         <contractCodes> _ => CODES </contractCodes>
       [priority(60)]
 
     syntax InternalCmd ::= "dropWorldState"  [symbol(dropWorldState)]

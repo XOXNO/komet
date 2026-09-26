@@ -6,10 +6,12 @@ Each function converts a semantic value or operator into a JSON term.
 
 ```k
 requires "configuration.md"
+requires "host/xdr.md"
 requires "json.md"
 
 module JSON-UTILS
     imports CONFIG-OPERATIONS
+    imports HOST-XDR
     imports JSON
 ```
 
@@ -295,6 +297,7 @@ These functions serialize the runtime state captured at each trace point.
 ```
 
 `Address2JSON` mirrors the `#decodeArg` address format from komet-node: `{"type": "address", "addrType": "account"/"contract", "value": hexStr}`.
+Muxed accounts use `"addrType": "muxed_account"` with an additional `"id"` field.
 Bytes are encoded with the builtin `Bytes2Hex` hook, which is the inverse of `HexBytes` from komet-node.
 
 ```k
@@ -302,6 +305,7 @@ Bytes are encoded with the builtin `Bytes2Hex` hook, which is the inverse of `He
  // ---------------------------------------------------------
     rule Address2JSON(Account(B))  => {"type" : "address", "addrType" : "account",  "value" : Bytes2Hex(B)}
     rule Address2JSON(Contract(B)) => {"type" : "address", "addrType" : "contract", "value" : Bytes2Hex(B)}
+    rule Address2JSON(MuxedAccount(I, B)) => {"type" : "address", "addrType" : "muxed_account", "id" : I, "value" : Bytes2Hex(B)}
 ```
 
 `ScVal2JSON` serializes a `ScVal` as a JSON object `{"type": "...", "value": ...}`.
@@ -320,16 +324,23 @@ Bytes are encoded with the builtin `Bytes2Hex` hook, which is the inverse of `He
     rule ScVal2JSON(I32(I))             => {"type" : "i32",     "value" : I}
     rule ScVal2JSON(U64(I))             => {"type" : "u64",     "value" : I}
     rule ScVal2JSON(I64(I))             => {"type" : "i64",     "value" : I}
+    rule ScVal2JSON(ScTimepoint(I))     => {"type" : "timepoint", "value" : I}
+    rule ScVal2JSON(ScDuration(I))      => {"type" : "duration",  "value" : I}
     rule ScVal2JSON(U128(I))            => {"type" : "u128",    "value" : I}
     rule ScVal2JSON(I128(I))            => {"type" : "i128",    "value" : I}
     rule ScVal2JSON(U256(I))            => {"type" : "u256",    "value" : I}
     rule ScVal2JSON(I256(I))            => {"type" : "i256",    "value" : I}
     rule ScVal2JSON(Symbol(S))          => {"type" : "symbol",  "value" : S}
     rule ScVal2JSON(ScString(S))        => {"type" : "string",  "value" : S}
+    rule ScVal2JSON(ScExecutableTag(S)) => {"type" : "executable_tag", "value" : S}
     rule ScVal2JSON(ScBytes(B))         => {"type" : "bytes",   "value" : Bytes2Hex(B)}
     rule ScVal2JSON(ScAddress(A))       => Address2JSON(A)
     rule ScVal2JSON(ScVec(L))           => {"type" : "vec",     "value" : [ScVec2JSONs(L)]}
     rule ScVal2JSON(ScMap(M))           => {"type" : "map",     "value" : [ScMap2JSONs(M, sortedKeys(M))]}
+    // Decoder-only values are represented explicitly if inspected mid-conversion.
+    rule ScVal2JSON(XdrMap(L))          => {"type" : "xdr_map", "value" : [ScVec2JSONs(L)]}
+    rule ScVal2JSON(XdrUnsupported)     => {"type" : "xdr_unsupported"}
+    rule ScVal2JSON(XdrInvalid(E))      => {"type" : "xdr_invalid", "error" : ScVal2JSON(E)}
 
     rule ScVec2JSONs(.List)                  => .JSONs
     rule ScVec2JSONs(ListItem(V:ScVal) REST) => ScVal2JSON(V) , ScVec2JSONs(REST)

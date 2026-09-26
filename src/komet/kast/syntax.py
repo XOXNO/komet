@@ -36,8 +36,8 @@ def set_account(acct: bytes, i: int) -> KInner:
     return KApply('setAccount', [account_id(acct), token(i)])
 
 
-def upload_wasm(name: bytes, contract: KInner) -> KInner:
-    return KApply('uploadWasm', [token(name), contract])
+def upload_wasm(name: bytes, contract: KInner, protocol: int = 28) -> KInner:
+    return KApply('uploadWasmWithProtocol', [token(name), contract, token(protocol)])
 
 
 def deploy_contract(from_addr: bytes, address: bytes, wasm_hash: bytes) -> KInner:

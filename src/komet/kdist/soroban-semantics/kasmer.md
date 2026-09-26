@@ -26,6 +26,8 @@ module KASMER-SYNTAX-COMMON
     syntax Step ::= setExitCode(Int)                                                                     [symbol(setExitCode)]
                   | setAccount( address: AccountId, balance: Int)                                        [symbol(setAccount)]
                   | uploadWasm(Bytes, ModuleDecl)                                                        [symbol(uploadWasm)]
+                  | uploadWasmWithProtocol(Bytes, ModuleDecl, Int)                                       [symbol(uploadWasmWithProtocol)]
+                  | setLedgerNetworkId(Bytes)                                                           [symbol(setLedgerNetworkId)]
                   | deployContract( from: Address, address: ContractId, wasmHash: Bytes )                [symbol(deployContract)]
                   | callTx( from: Address, to: Address, func: WasmString, args: List, result: ScVal)     [symbol(callTx)]
 
@@ -105,6 +107,28 @@ module KASMER
     rule [uploadWasm-exists]:
         <k> uploadWasm(HASH, _MOD) => .K ... </k>
         <codeHash> HASH </codeHash>  
+
+    rule [uploadWasmWithProtocol-exists]:
+        <k> uploadWasmWithProtocol(HASH, _MOD, _PROTOCOL) => .K ... </k>
+        <codeHash> HASH </codeHash>
+
+    rule [uploadWasmWithProtocol]:
+        <k> uploadWasmWithProtocol(HASH, MOD, PROTOCOL) => .K ... </k>
+        (.Bag => <contractCode>
+          <codeHash> HASH </codeHash>
+          <codeLiveUntil> minLiveUntil(#persistent, SEQ) </codeLiveUntil>
+          <codeProtocol> PROTOCOL </codeProtocol>
+          <codeWasm> MOD </codeWasm>
+          ...
+        </contractCode>)
+        <ledgerSequenceNumber> SEQ </ledgerSequenceNumber>
+      requires 0 <=Int PROTOCOL andBool PROTOCOL <=Int 28
+      [priority(51)]
+
+    rule [setLedgerNetworkId]:
+        <k> setLedgerNetworkId(ID) => .K ... </k>
+        <ledgerNetworkId> _ => ID </ledgerNetworkId>
+      requires lengthBytes(ID) ==Int 32
       
   // Contract code is a persistent ledger entry, so an upload starts it with the
   // minimum persistent TTL, exactly as `putContractData` does for a new
@@ -140,7 +164,7 @@ module KASMER
         ( .Bag =>
           <contract>
             <contractId> ADDR </contractId>
-            <wasmHash> WASM_HASH </wasmHash>
+            <contractExecutable> Wasm(WASM_HASH) </contractExecutable>
             <contractLiveUntil> minLiveUntil(#persistent, SEQ) </contractLiveUntil>
             ...
           </contract>
@@ -153,6 +177,12 @@ module KASMER
     rule [callContractFromStack]:
         <k> callContractFromStack(FROM, TO, FUNC) => callContract(FROM, TO, FUNC, ARGS) ... </k>
         <hostStack> ARGS : S => S </hostStack>
+      requires substrString(wasmString2StringStripped(FUNC), 0, minInt(2, lengthString(wasmString2StringStripped(FUNC)))) =/=String "__"
+
+    rule [callContractFromStack-reserved]:
+        <k> callContractFromStack(_, _, FUNC) => pushStack(Error(ErrContext, InvalidAction)) ... </k>
+        <hostStack> _ARGS : S => S </hostStack>
+      requires substrString(wasmString2StringStripped(FUNC), 0, minInt(2, lengthString(wasmString2StringStripped(FUNC)))) ==String "__"
 
  // --------------------------------------------------------------------------------------------------------------
     rule [callTx]:
