@@ -188,6 +188,14 @@ declaration ordering. The
 full signed-i128 storage round-trip proof remains incomplete; these checks
 validate the model repair, not that contract claim.
 
+Guarded signed-word normalization now exposes both sign branches for all actual
+integer widths while retaining the complete original domain and definedness.
+Validation records 133 distinct passing backend cases: 22 new checks, 110 prior
+checks, and the one prior startup failure passing on an unchanged-input retry.
+That is not a clean 133-case run. The original startup failure remains recorded;
+its socket-discovery versus process-exit cause is unresolved. All 116 concrete
+modules remain unchanged after path/order normalization.
+
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
@@ -257,6 +265,12 @@ typed RPC startup check cover this protection; actual report replay was not run.
 Successful launches also leave their temporary directories available for diagnosis.
 Pinned pyk records Python in the wrapper's auxiliary `server_version.txt`;
 record the actual Booster executable's version and hash separately.
+
+The shared proof context starts SMT queries with a 5000 ms timeout, retaining
+the native default retry policy and strict Unknown handling. Retries can increase
+that timeout; it is not a total proof deadline. The unchanged previously timed-out
+range query returns typed UNSAT in 0.585 seconds. The integrated runtime passes
+153 unit checks; these results add no completed contract proof.
 
 ## Run the checks
 
