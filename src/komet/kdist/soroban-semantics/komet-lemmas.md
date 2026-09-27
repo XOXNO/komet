@@ -179,6 +179,14 @@ module HOST-OBJECT-LEMMAS [symbolic]
     requires 0 <=Int N andBool N <Int #pow(W)
     [simplification, concrete(W)]
 
+  // Expose both signed cases for every actual integer width, including i128/i256.
+  // Preserve the partial function's domain and default operand definedness.
+  rule [signed-in-range]:
+      #signed(W:IWidth, N)
+        => #if N <Int #pow1(W) #then N #else N -Int #pow(W) #fi
+    requires 0 <=Int N andBool N <Int #pow(W)
+    [simplification, concrete(W)]
+
   // Match definedUnsigned's mixed signed/unsigned domain, including its upper half.
   rule [unsigned-in-range]:
       #unsigned(W:IWidth, N)
