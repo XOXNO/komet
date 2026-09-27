@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import nullcontext
 from pathlib import Path
+from subprocess import CompletedProcess
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
@@ -9,20 +10,105 @@ from unittest.mock import Mock
 import pytest
 from pyk.cterm import CTerm
 from pyk.kast.att import Atts, KAtt
-from pyk.kast.inner import KApply, KVariable
+from pyk.kast.inner import KApply, KSequence, KVariable
 from pyk.kast.outer import KClaim, KFlatModule
 from pyk.kast.prelude.ml import mlEqualsTrue
+from pyk.kast.prelude.utils import token
 from pyk.kore.rpc import UnsatResult
+from pyk.kore.syntax import SortApp, Top
 from pyk.proof import ProofStatus
 
 from komet import kasmer as kasmer_module
 from komet import komet as cli_module
 from komet import proof as proof_module
-from komet.kasmer import ContractBinding, Kasmer
+from komet.kasmer import ContractBinding, FuzzError, Kasmer, _run_test_case
+from komet.kast.syntax import STEPS_TERMINATOR, sc_bool
 from komet.utils import KSorobanError
 
 if TYPE_CHECKING:
     from pytest import MonkeyPatch
+
+
+def _test_terminal(exit_code: int, pending: bool = False, mismatch: bool = False) -> KApply:
+    k = KSequence(KApply('pending')) if pending else KSequence()
+    stack = KApply('.List{"hostStackList"}')
+    if mismatch:
+        k = KSequence(KApply('expectResult', sc_bool(True)), KApply('#resetHost'))
+        stack = KApply('hostStackList', sc_bool(False), stack)
+    return KApply(
+        '<generatedTop>',
+        KApply('<exitCode>', token(exit_code)),
+        KApply('<program>', STEPS_TERMINATOR),
+        KApply('<k>', k),
+        KApply('<instrs>', KSequence()),
+        KApply('<hostStack>', stack),
+        KApply('<valstack>', KApply('.ValStack')),
+        KApply('<callStack>', KApply('.List')),
+    )
+
+
+@pytest.mark.parametrize('exit_code, expected', [(0, True), (1, False)])
+def test_fuzz_uses_krun_and_checks_terminal_verdict(monkeypatch: MonkeyPatch, exit_code: int, expected: bool) -> None:
+    pattern = Top(SortApp('SortGeneratedTopCell'))
+    definition = Mock()
+    definition.krun.run_process.return_value = CompletedProcess([], exit_code, pattern.text, '')
+    monkeypatch.setattr(kasmer_module, 'kore_to_kast', lambda *args: _test_terminal(exit_code, mismatch=exit_code == 1))
+    assert _run_test_case(definition, pattern) is expected
+    definition.krun.run_process.assert_called_once_with(pattern, term=True)
+
+
+@pytest.mark.parametrize('returncode, stdout', [(-6, ''), (1, ''), (0, 'not kore')])
+def test_fuzz_backend_errors_are_infrastructure_failures(returncode: int, stdout: str) -> None:
+    definition = Mock()
+    definition.krun.run_process.return_value = CompletedProcess(
+        [], returncode, stdout, 'Called finish_rewriting with no output file specified'
+    )
+    with pytest.raises(RuntimeError, match='Komet backend'):
+        _run_test_case(definition, Top(SortApp('SortGeneratedTopCell')))
+
+
+@pytest.mark.parametrize('terminal', [_test_terminal(0, pending=True), _test_terminal(1), KApply('<generatedTop>')])
+def test_fuzz_rejects_incomplete_or_inconsistent_terminals(monkeypatch: MonkeyPatch, terminal: KApply) -> None:
+    pattern = Top(SortApp('SortGeneratedTopCell'))
+    definition = Mock()
+    definition.krun.run_process.return_value = CompletedProcess([], 0, pattern.text, '')
+    monkeypatch.setattr(kasmer_module, 'kore_to_kast', lambda *args: terminal)
+    with pytest.raises(RuntimeError, match='Komet backend'):
+        _run_test_case(definition, pattern)
+
+
+@pytest.mark.parametrize('pending', [False, True])
+def test_fuzz_does_not_call_unknown_stuck_execution_a_counterexample(monkeypatch: MonkeyPatch, pending: bool) -> None:
+    pattern = Top(SortApp('SortGeneratedTopCell'))
+    definition = Mock()
+    definition.krun.run_process.return_value = CompletedProcess([], 1, pattern.text, '')
+    monkeypatch.setattr(kasmer_module, 'kore_to_kast', lambda *args: _test_terminal(1, pending=pending))
+    with pytest.raises(RuntimeError, match='without a confirmed Boolean result mismatch'):
+        _run_test_case(definition, pattern)
+
+
+@pytest.mark.parametrize('outcome', ['pass', 'false', 'abort'])
+def test_fuzz_loop_reports_only_property_failures(monkeypatch: MonkeyPatch, outcome: str) -> None:
+    pattern = Top(SortApp('SortGeneratedTopCell'))
+    monkeypatch.setattr(kasmer_module, 'kast_to_kore', lambda *args: pattern)
+    monkeypatch.setattr(kasmer_module, 'subst_on_program_cell', lambda *args: pattern)
+    execute = Mock(return_value=outcome == 'pass')
+    if outcome == 'abort':
+        execute.side_effect = RuntimeError('Komet backend execution failed (exit -6)')
+    monkeypatch.setattr(kasmer_module, '_run_test_case', execute)
+    binding = ContractBinding('test_witness', (), ())
+    task = Mock(binding=binding)
+    kasmer = Kasmer(Mock())
+    if outcome == 'pass':
+        kasmer.run_test(KVariable('PROGRAM_CELL'), {}, binding, 1, task)
+    else:
+        with pytest.raises(FuzzError if outcome == 'false' else RuntimeError):
+            kasmer.run_test(KVariable('PROGRAM_CELL'), {}, binding, 1, task)
+    if outcome == 'false':
+        task.fail.assert_called_once_with()
+    else:
+        task.fail.assert_not_called()
+    execute.assert_called()
 
 
 @pytest.mark.parametrize('functional', [False, True])
@@ -59,7 +145,9 @@ def test_raw_proof_rejects_empty_selection(label: str | None) -> None:
 @pytest.mark.parametrize('names', [[], ['init', 'main']])
 def test_contract_run_rejects_empty_test_discovery(monkeypatch: MonkeyPatch, method: str, names: list[str]) -> None:
     kasmer = Kasmer(Mock())
-    monkeypatch.setattr(kasmer, 'contract_bindings', lambda _, **kwargs: [ContractBinding(name, (), ()) for name in names])
+    monkeypatch.setattr(
+        kasmer, 'contract_bindings', lambda _, **kwargs: [ContractBinding(name, (), ()) for name in names]
+    )
     monkeypatch.setattr(kasmer, 'kast_from_wasm', lambda _: KVariable('CODE'))
     monkeypatch.setattr(kasmer, 'contract_protocol', lambda _: 28)
     deploy = Mock(return_value=(KVariable('CONF'), {}))

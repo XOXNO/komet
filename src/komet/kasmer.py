@@ -8,9 +8,9 @@ from pathlib import Path
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING
 
-from hypothesis import strategies
+from hypothesis import Phase, given, settings, strategies
 from pyk.cterm import CTerm, cterm_build_claim
-from pyk.kast.inner import KSort, KVariable
+from pyk.kast.inner import KApply, KSequence, KSort, KVariable
 from pyk.kast.manip import Subst, split_config_from
 from pyk.kast.outer import KClaim
 from pyk.kast.prelude.ml import mlEqualsTrue
@@ -19,7 +19,7 @@ from pyk.konvert import kast_to_kore, kore_to_kast
 from pyk.kore.parser import KoreParser
 from pyk.kore.prelude import str_dv
 from pyk.kore.syntax import EVar, SortApp
-from pyk.ktool.kfuzz import KFuzzHandler, fuzz
+from pyk.ktool.kfuzz import KFuzzHandler
 from pyk.ktool.krun import KRunOutput
 from pyk.proof import ProofStatus
 from pyk.utils import run_process
@@ -281,7 +281,7 @@ class Kasmer:
             return KVariable(f'ARG_{i}', KSort('ScVal'))
 
         def make_evar(i: int) -> EVar:
-            return EVar(f"VarARG\'Unds\'{i}", SortApp('SortScVal'))
+            return EVar(f"VarARG'Unds'{i}", SortApp('SortScVal'))
 
         def make_steps(args: Iterable[KInner]) -> KInner:
             return steps_of([set_exit_code(1), call_tx(from_acct, to_acct, name, args, result), set_exit_code(0)])
@@ -296,15 +296,18 @@ class Kasmer:
 
         template_subst = {make_evar(i): b.strategy().map(scval_to_kore) for i, b in enumerate(binding.inputs)}
 
-        fuzz(
-            self.definition.path,
-            template_config_kore,
-            template_subst,
-            check_exit_code=True,
-            max_examples=max_examples,
-            handler=KometFuzzHandler(self.definition, task),
-            subst_func=subst_on_program_cell,
-        )
+        handler = KometFuzzHandler(self.definition, task)
+
+        # External semantic execution is bounded by examples, not Hypothesis's short CPU deadline.
+        @given(strategies.fixed_dictionaries(template_subst))
+        @settings(max_examples=max_examples, deadline=None, phases=(Phase.explicit, Phase.reuse, Phase.generate))
+        def test_case(args: Mapping[EVar, Pattern]) -> None:
+            handler.handle_test(args)
+            pattern = subst_on_program_cell(template_config_kore, args)
+            if not _run_test_case(self.definition, pattern):
+                handler.handle_failure(args)
+
+        test_case()
 
     def run_prove(
         self,
@@ -566,6 +569,65 @@ class FuzzTask:
     def fail(self) -> None:
         self.progress.update(self.task_id, status='[bold red]Failed')
         self.progress.stop_task(self.task_id)
+
+
+def _run_test_case(definition: SorobanDefinition, pattern: Pattern) -> bool:
+    # KRun owns the installed interpreter's CLI; pyk's raw fuzz command uses an older ABI.
+    result = definition.krun.run_process(pattern, term=True)
+    if result.returncode not in (0, 1):
+        raise RuntimeError(f'Komet backend execution failed (exit {result.returncode}): {result.stderr}')
+    try:
+        terminal = kore_to_kast(definition.kdefinition, KoreParser(result.stdout).pattern())
+        if not isinstance(terminal, KApply) or terminal.label.name != '<generatedTop>':
+            raise ValueError('Expected a generated top configuration')
+        _, cells = split_config_from(terminal)
+        required = {
+            'EXITCODE_CELL',
+            'PROGRAM_CELL',
+            'K_CELL',
+            'INSTRS_CELL',
+            'HOSTSTACK_CELL',
+            'VALSTACK_CELL',
+            'CALLSTACK_CELL',
+        }
+        if not required <= cells.keys():
+            raise ValueError('Missing execution cells')
+        exit_code = cells['EXITCODE_CELL']
+    except Exception as error:
+        raise RuntimeError(f'Komet backend returned no usable terminal configuration: {result.stderr}') from error
+    if exit_code == token(1) and result.returncode == 1:
+        k = cells['K_CELL']
+        stack = cells['HOSTSTACK_CELL']
+        if (
+            isinstance(k, KSequence)
+            and k.items
+            and isinstance(k.items[0], KApply)
+            and k.items[0].label.name == 'expectResult'
+            and len(k.items[0].args) == 1
+            and isinstance(stack, KApply)
+            and stack.label.name == 'hostStackList'
+            and len(stack.args) == 2
+            and stack.args[1] == KApply('.List{"hostStackList"}')
+            and (k.items[0].args[0], stack.args[0])
+            in ((sc_bool(True), sc_bool(False)), (sc_bool(False), sc_bool(True)))
+            and cells['INSTRS_CELL'] == KSequence()
+            and cells['VALSTACK_CELL'] == KApply('.ValStack')
+            and cells['CALLSTACK_CELL'] == KApply('.List')
+        ):
+            return False
+        raise RuntimeError('Komet semantic execution stopped without a confirmed Boolean result mismatch')
+    if exit_code != token(0) or result.returncode != 0:
+        raise RuntimeError(f'Komet backend returned inconsistent exit codes: {result.returncode}, {exit_code}')
+    if (
+        cells.get('PROGRAM_CELL') != STEPS_TERMINATOR
+        or cells.get('K_CELL') != KSequence()
+        or cells.get('INSTRS_CELL') != KSequence()
+        or cells.get('HOSTSTACK_CELL') != KApply('.List{"hostStackList"}')
+        or cells.get('VALSTACK_CELL') != KApply('.ValStack')
+        or cells.get('CALLSTACK_CELL') != KApply('.List')
+    ):
+        raise RuntimeError('Komet backend stopped before the test completed')
+    return True
 
 
 class KometFuzzHandler(KFuzzHandler):
