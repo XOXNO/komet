@@ -21,6 +21,8 @@ module INT-BITWISE-LEMMAS [symbolic]
 
   rule C |Int S => S |Int C [simplification, concrete(C), symbolic(S)]
   rule X |Int 0 => X        [simplification]
+  rule [xor-zero-right]: I xorInt 0 => I [simplification]
+  rule [xor-zero-left]:  0 xorInt I => I [simplification]
   // Keep the default definedness obligation for the erased operand.
   rule _X &Int 0 => 0       [simplification]
 

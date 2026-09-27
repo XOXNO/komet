@@ -5,11 +5,12 @@ from pathlib import Path
 import pytest
 from pyk.cterm import CTerm
 from pyk.kast.inner import KApply, KInner, KVariable, Subst
-from pyk.kast.prelude.ml import is_bottom, mlAnd, mlCeil, mlEqualsTrue
+from pyk.kast.prelude.ml import is_bottom, is_top, mlAnd, mlCeil, mlEqualsTrue
 from pyk.kast.prelude.utils import token
 from pyk.kcfg import KCFGExplore
 from pyk.kcfg.kcfg import Vacuous
 from pyk.konvert import kast_to_kore, kore_to_kast
+from pyk.kore.rpc import SatResult
 
 from komet.proof import _explore_context
 from komet.utils import symbolic_definition
@@ -189,4 +190,47 @@ def test_actual_half_up_error_path_is_infeasible(concat_explore: KCFGExplore) ->
     state = CTerm(KApply('<generatedTop>'), constraints)
     step = concat_explore.kcfg_semantics.custom_step(state, concat_explore.cterm_symbolic, 45)
     assert isinstance(step, Vacuous)
+    assert set(state.constraints) == set(constraints)
+
+
+def test_xor_zero_identities(concat_simplify: Callable[[KInner], KInner]) -> None:
+    value = KVariable('X', 'Int')
+    for expression in [KApply('_xorInt_', value, token(0)), KApply('_xorInt_', token(0), value)]:
+        assert concat_simplify(expression) == value
+        for concrete in [-(1 << 256), -1, 0, 1, (1 << 256) - 1]:
+            assert concat_simplify(Subst({'X': token(concrete)}).apply(expression)) == token(concrete)
+    nonzero = KApply('_xorInt_', value, token(1))
+    assert _has_label(concat_simplify(nonzero), '_xorInt_')
+    assert concat_simplify(Subst({'X': token(-1)}).apply(nonzero)) == token(-2)
+
+
+def test_xor_zero_preserves_partial_operands(concat_simplify: Callable[[KInner], KInner]) -> None:
+    quotient = KApply('_/Int_', KVariable('X', 'Int'), KVariable('D', 'Int'))
+    for expression in [KApply('_xorInt_', quotient, token(0)), KApply('_xorInt_', token(0), quotient)]:
+        result = concat_simplify(expression)
+        _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(result))
+        assert concat_simplify(Subst({'X': token(-3), 'D': token(1)}).apply(result)) == token(-3)
+
+
+def test_actual_half_two_xor_error_path_is_infeasible(concat_explore: KCFGExplore) -> None:
+    path = Path(__file__).parent / 'data' / 'half_two_node_46_constraints.json'
+    constraints = [KInner.from_dict(item) for item in json.loads(path.read_text())]
+    assert len(constraints) == 6
+    state = CTerm(KApply('<generatedTop>'), constraints)
+    assert isinstance(concat_explore.kcfg_semantics.custom_step(state, concat_explore.cterm_symbolic, 46), Vacuous)
+    assert set(state.constraints) == set(constraints)
+
+
+def test_actual_half_two_feasible_sibling_is_preserved(concat_explore: KCFGExplore) -> None:
+    path = Path(__file__).parent / 'data' / 'half_two_node_45_constraints.json'
+    constraints = [KInner.from_dict(item) for item in json.loads(path.read_text())]
+    assert len(constraints) == 6
+    state = CTerm(KApply('<generatedTop>'), constraints)
+    cs = concat_explore.cterm_symbolic
+    assert concat_explore.kcfg_semantics.custom_step(state, cs, 45) is None
+    normalized, _ = cs.kast_simplify(mlAnd(constraints))
+    assert isinstance(cs._kore_client.get_model(cs.kast_to_kore(normalized)), SatResult)
+    witness = Subst({'ARG_0': token(-(1 << 100))}).apply(mlAnd(constraints))
+    concrete, _ = cs.kast_simplify(witness)
+    assert is_top(concrete)
     assert set(state.constraints) == set(constraints)
