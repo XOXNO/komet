@@ -98,6 +98,14 @@ module INT-BITWISE-LEMMAS [symbolic]
     requires 0 <=Int SHIFT
     [simplification, concrete(SHIFT)]
 
+  // Shifting leaves the low bits zero, including for negative high words.
+  // Keep default definedness checks for both operands and the shift width.
+  rule [pack-bounded-low-word]:
+      (H <<Int WIDTH) |Int L => H *Int (2 ^Int WIDTH) +Int L
+    requires 0 <=Int WIDTH
+     andBool 0 <=Int L andBool L <Int (2 ^Int WIDTH)
+    [simplification, concrete(WIDTH)]
+
   // Bounded limbs occupy disjoint bit ranges; all operands remain defined.
   rule [pack-four-u64-limbs]:
       (((A <<Int 192) |Int (B <<Int 128)) |Int (C <<Int 64)) |Int D

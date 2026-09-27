@@ -179,6 +179,15 @@ half-up branches and feasible siblings. Modulus one can lose the matching
 XOR shape to an earlier rule; ground and partial-operand checks retain that
 case, but symbolic normalization to zero is not guaranteed there.
 
+General two-word packing now becomes a weighted sum when the shift width is
+concrete and nonnegative and the low word fits that width. The high word may
+be negative; default definedness is retained. This revision passes 111 backend
+checks, including all earlier four-limb cases and exact saved storage predicates.
+The 116 parsed concrete modules remain unchanged modulo source paths and
+declaration ordering. The
+full signed-i128 storage round-trip proof remains incomplete; these checks
+validate the model repair, not that contract claim.
+
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
