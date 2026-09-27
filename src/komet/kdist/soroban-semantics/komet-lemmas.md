@@ -72,6 +72,14 @@ module INT-BITWISE-LEMMAS [symbolic]
     requires 0 <Int M andBool isPowerOf2(M)
     [simplification, concrete(M)]
 
+  // The selected XOR bit is zero exactly when both operand bits agree.
+  // Keep default definedness, including when the two operands coincide.
+  rule [masked-xor-sign-bit]:
+      ((X xorInt Y) modInt M) <Int B
+        => ((X modInt M) <Int B) ==Bool ((Y modInt M) <Int B)
+    requires 0 <Int B andBool isPowerOf2(B) andBool M ==Int (2 *Int B)
+    [simplification, concrete(B, M)]
+
   // Arithmetic right shift is floor division, including negative dividends.
   rule [constant-right-shift]:
       I >>Int SHIFT => I divInt (2 ^Int SHIFT)
@@ -93,6 +101,12 @@ endmodule
 module HOST-OBJECT-LEMMAS [symbolic]
   imports HOST-OBJECT
   imports INT-BITWISE-LEMMAS
+
+  // Reverse the integer comparison so the guarded width rules apply in either orientation.
+  rule [reverse-min-width-comparison]:
+      ((C -Int #minWidth(N)) modInt M) >Int B
+        => notBool ((B +Int 1) >Int ((C -Int #minWidth(N)) modInt M))
+    [simplification, concrete(B, C, M)]
 
   // In this domain, minWidth(N) lies between zero and C modInt M.
   // Keep default definedness checks, especially when a constant arm erases N.

@@ -161,6 +161,16 @@ borrower branch/terminal fixtures and the saved half-up error path close;
 the initial and feasible predecessor fixtures remain open. These local checks do
 not establish a completed universal pool-property proof.
 
+Subsequent symbolic repairs normalize XOR with zero, both orientations of
+guarded CLZ comparisons, masked OR-zero comparisons and the most significant
+bit of a masked XOR. The XOR rule uses a positive power-of-two half-modulus;
+it applies to arbitrary signed operands. All retain default definedness
+obligations. The combined revision passes 74 backend checks, including exact
+saved impossible paths, feasible siblings, signed extrema and partial operands.
+Its 116 parsed concrete modules match the preceding model after normalizing
+source metadata and module ordering. This validates the normalization repairs;
+the broad pool arithmetic proofs remain incomplete.
+
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
@@ -194,6 +204,17 @@ with changed or unrecorded inputs is rejected. Checkpoints are written when
 execution raises an exception or is interrupted; a checkpoint is not a proof.
 Use fresh proof directories after changing Wasm, semantics or the proof runner.
 
+Stateful tests allow the four persistent-world cells (`contracts`, `accounts`,
+`contractData`, `contractCodes`) to change in the final state. Each receives a
+distinct typed existential; initial state, Boolean assertion, termination and
+all other cells remain constrained. This fixes the earlier target that
+incorrectly required unchanged storage. It does not assert a financial state
+invariant: each test must specify its own required postconditions.
+
+APR executes at most 1,000 rewrites per RPC and resumes pending continuations.
+This is a checkpoint interval, not a total proof bound. A real checkpoint/reload
+regression passes; resource-limited or interrupted continuations are incomplete.
+
 Before APR advancement, including resumption of an already passed proof, the runner
 rejects a syntactically bottom or marked-vacuous initial state and initial constraints
 proved UNSAT. It checks the initial bottom/vacuous status again after advancement.
@@ -206,7 +227,7 @@ statuses propagate failure. Empty contract-test or raw-claim selections also
 fail instead of returning success. Negative controls must reach the expected
 assertion failure; a nonzero exit caused by a tool crash is inconclusive.
 
-Runtime, resume and verdict validation currently passes 103 unit checks, including
+Runtime, resume and verdict validation currently passes 149 unit checks, including
 explicit Unknown handling, backend errors, initial-vacuity CLI failure, resumed
 initial Bottom, module selection and runner-source fingerprint changes.
 These checks validate the tooling paths, not contract correctness.
