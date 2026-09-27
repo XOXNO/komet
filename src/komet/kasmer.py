@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from hypothesis import Phase, given, settings, strategies
 from pyk.cterm import CTerm, cterm_build_claim
 from pyk.kast.inner import KApply, KSequence, KSort, KVariable
-from pyk.kast.manip import Subst, split_config_from
+from pyk.kast.manip import Subst, split_config_from, top_down
 from pyk.kast.outer import KClaim
 from pyk.kast.prelude.ml import mlEqualsTrue
 from pyk.kast.prelude.utils import token
@@ -320,6 +320,9 @@ class Kasmer:
     ) -> APRProof:
         """Given a configuration with a deployed test contract, prove the test case defined by the supplied binding.
 
+        The target preserves successful termination and checks the Boolean assertion, while allowing the four
+        transaction world-state cells to change. Post-state invariants belong in the test's Boolean assertion.
+
         Args:
             conf: The template configuration with configuration variables.
             subst: A substitution mapping such that `Subst(subst).apply(conf)` produces the initial configuration with
@@ -347,7 +350,24 @@ class Kasmer:
         rhs_subst['PROGRAM_CELL'] = STEPS_TERMINATOR
         rhs_subst['EXITCODE_CELL'] = token(0)
         del rhs_subst['ALWAYSALLOCATE_CELL']
-        rhs = CTerm(Subst(rhs_subst).apply(conf))
+        # Match the pushWorldState/popWorldState boundary in configuration.md. Only RHS world state is fresh;
+        # the concrete initial world, expected True result, and all terminal execution cells remain fixed.
+        post_world_cells = {
+            '<contracts>': ('POST_CONTRACTS_CELL', 'ContractCellMap'),
+            '<accounts>': ('POST_ACCOUNTS_CELL', 'AccountCellMap'),
+            '<contractData>': ('POST_CONTRACTDATA_CELL', 'Map'),
+            '<contractCodes>': ('POST_CONTRACTCODES_CELL', 'ContractCodeCellMap'),
+        }
+
+        def fresh_post_world(cell: KInner) -> KInner:
+            if type(cell) is KApply and cell.label.name in post_world_cells:
+                name, sort = post_world_cells[cell.label.name]
+                return cell.let(args=(KVariable(name, KSort(sort)),))
+            return cell
+
+        # split_config_from can expand singleton cell maps into their nested leaf cells. Project the actual
+        # RHS tree so contracts/accounts/code are fresh even when no whole-cell substitution key exists.
+        rhs = CTerm(top_down(fresh_post_world, Subst(rhs_subst).apply(conf)))
 
         claim, _ = cterm_build_claim(name, lhs, rhs)
 
