@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 from unittest.mock import Mock
@@ -20,9 +21,37 @@ from komet import proof as proof_module
 from komet.utils import KSorobanError
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
+    from pyk.utils import BugReport
     from pytest import MonkeyPatch
+
+
+@pytest.mark.parametrize('report', [None, Mock()])
+def test_explore_context_preserves_caller_paths_and_report(
+    tmp_path: Path, monkeypatch: MonkeyPatch, report: BugReport | None
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    definition = Mock()
+    monkeypatch.setattr(
+        proof_module, 'symbolic_definition', lambda: SimpleNamespace(path=Path('haskell'), kdefinition=definition)
+    )
+    monkeypatch.setattr(proof_module, 'library_definition', lambda: SimpleNamespace(path=Path('llvm')))
+    symbolic = Mock()
+    context = Mock(return_value=nullcontext(symbolic))
+    monkeypatch.setattr(proof_module, 'cterm_symbolic', context)
+    explore = Mock()
+    monkeypatch.setattr(proof_module, 'KCFGExplore', lambda *args, **kwargs: explore)
+    with proof_module._explore_context('original-claim', report) as actual:
+        assert actual is explore
+        assert Path.cwd() == tmp_path
+    assert Path.cwd() == tmp_path
+    assert context.call_args.kwargs == {
+        'definition': definition,
+        'definition_dir': tmp_path / 'haskell',
+        'llvm_definition_dir': tmp_path / 'llvm',
+        'kore_rpc_command': proof_module.booster_command(),
+        'id': 'original-claim' if report else None,
+        'bug_report': report,
+    }
 
 
 @pytest.mark.parametrize(

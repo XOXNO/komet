@@ -244,10 +244,19 @@ statuses propagate failure. Empty contract-test or raw-claim selections also
 fail instead of returning success. Negative controls must reach the expected
 assertion failure; a nonzero exit caused by a tool crash is inconclusive.
 
-Runtime, resume and verdict validation currently passes 149 unit checks, including
+Runtime, resume and verdict validation currently passes 153 unit checks, including
 explicit Unknown handling, backend errors, initial-vacuity CLI failure, resumed
 initial Bottom, module selection and runner-source fingerprint changes.
 These checks validate the tooling paths, not contract correctness.
+
+Booster runs in a unique temporary working directory so its fixed-name crash
+report cannot overwrite caller files. The launcher prints that retained directory;
+explicit reports keep their requested path and request IDs. Relative definition
+and library paths still resolve during report replay. Unit checks and an actual
+typed RPC startup check cover this protection; actual report replay was not run.
+Successful launches also leave their temporary directories available for diagnosis.
+Pinned pyk records Python in the wrapper's auxiliary `server_version.txt`;
+record the actual Booster executable's version and hash separately.
 
 ## Run the checks
 

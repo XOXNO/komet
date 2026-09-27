@@ -33,8 +33,8 @@ if TYPE_CHECKING:
 def _explore_context(id: str, bug_report: BugReport | None) -> Iterator[KCFGExplore]:
     with cterm_symbolic(
         definition=symbolic_definition().kdefinition,
-        definition_dir=symbolic_definition().path,
-        llvm_definition_dir=library_definition().path,
+        definition_dir=symbolic_definition().path.resolve(),
+        llvm_definition_dir=library_definition().path.resolve(),
         kore_rpc_command=booster_command(),
         id=id if bug_report else None,
         bug_report=bug_report,
