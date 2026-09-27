@@ -52,15 +52,20 @@ module INT-BITWISE-LEMMAS [symbolic]
   rule fullMask(I:Int) => (1 <<Int I) -Int 1 requires 0 <Int I
   rule fullMask(I:Int) => 0                  requires I <=Int 0
 
-  rule [modInt-to-bit-mask]:
-      I modInt M => I &Int (M -Int 1) requires isPowerOf2(M)
-    [simplification, concrete(M)]
+  // Euclidean modulo exposes full-word masking to SMT, including negative I.
+  rule [full-mask-to-modulus]:
+      I &Int MASK => I modInt (MASK +Int 1) requires isFullMask(MASK)
+    [simplification, concrete(MASK)]
 
 endmodule
 
 module HOST-OBJECT-LEMMAS [symbolic]
   imports HOST-OBJECT
   imports INT-BITWISE-LEMMAS
+
+  rule [boolean-word-value]:
+      #bool(B:Bool) => #if B #then 1 #else 0 #fi
+    [simplification]
 
   rule [bitwise-mk-hostval-then-mask]:
       (_I <<Int SHIFT |Int T) &Int MASK => T &Int MASK
@@ -76,6 +81,14 @@ module HOST-OBJECT-LEMMAS [symbolic]
     requires 0 <Int WIDTH
      andBool 0 <=Int N andBool N <Int (1 <<Int (8 *Int WIDTH))
     [simplification, concrete(WIDTH)]
+
+  // Expose the two defined signed-word cases to symbolic arithmetic.
+  // The total wrapper is unspecified outside this unsigned-word domain.
+  rule [signed-total-in-range]:
+      #signedTotal(W:IValType, N)
+        => #if N <Int #pow1(W) #then N #else N -Int #pow(W) #fi
+    requires 0 <=Int N andBool N <Int #pow(W)
+    [simplification, concrete(W)]
 
   rule #getRange(#setRange(_BM, ADDR, VAL,  WIDTH), ADDR', WIDTH') => #wrap(WIDTH', VAL)
     requires 0 <=Int ADDR

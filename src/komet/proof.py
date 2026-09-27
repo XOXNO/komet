@@ -3,23 +3,27 @@ from __future__ import annotations
 import json
 from contextlib import contextmanager
 from hashlib import sha256
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pyk.cterm import cterm_symbolic
 from pyk.kast.outer import KApply, KRewrite
+from pyk.kast.prelude.ml import mlAnd
 from pyk.kcfg import KCFGExplore
+from pyk.kcfg.kcfg import Vacuous
 from pyk.kcfg.semantics import DefaultSemantics
 from pyk.konvert import kast_to_kore, kore_to_kast
+from pyk.kore.rpc import UnsatResult
 from pyk.proof import APRProof, APRProver
 from pyk.proof.implies import EqualityProof, ImpliesProver
 
 from .native_stack import booster_command
-from .utils import library_definition, symbolic_definition
+from .utils import KSorobanError, library_definition, symbolic_definition
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from pathlib import Path
 
+    from pyk.cterm import CTerm, CTermSymbolic
     from pyk.kast.inner import KInner
     from pyk.kast.outer import KClaim, KFlatModule
     from pyk.utils import BugReport
@@ -35,10 +39,26 @@ def _explore_context(id: str, bug_report: BugReport | None) -> Iterator[KCFGExpl
         id=id if bug_report else None,
         bug_report=bug_report,
     ) as cts:
-        yield KCFGExplore(cts)
+        yield KCFGExplore(cts, kcfg_semantics=SorobanSemantics())
 
 
-class SorobanSemantics(DefaultSemantics): ...
+def _constraints_unsat(c: CTerm, cs: CTermSymbolic, module_name: str | None = None) -> bool:
+    if not c.is_bottom and not c.constraints:
+        return False
+    # Keep the complete normalized predicate, including any definedness conditions.
+    predicate = c.config if c.is_bottom else mlAnd(c.constraints)
+    normalized, _ = cs.kast_simplify(predicate, module_name=module_name)
+    # CTermSymbolic.get_model conflates UNSAT and Unknown; only explicit UNSAT closes a path.
+    result = cs._kore_client.get_model(cs.kast_to_kore(normalized), module_name=module_name)
+    return isinstance(result, UnsatResult)
+
+
+class SorobanSemantics(DefaultSemantics):
+    def __init__(self, module_name: str | None = None):
+        self.module_name = module_name
+
+    def custom_step(self, c: CTerm, cs: CTermSymbolic, node_id: int) -> Vacuous | None:
+        return Vacuous() if _constraints_unsat(c, cs, self.module_name) else None
 
 
 def _check_proof_inputs(id: str, claim: KClaim, extra_module: KFlatModule | None, proof_dir: Path | None) -> None:
@@ -54,6 +74,7 @@ def _check_proof_inputs(id: str, claim: KClaim, extra_module: KFlatModule | None
     if not libraries:
         raise ValueError(f'Compiled LLVM library missing in {llvm.path}')
     inputs = {
+        'runner': sha256(Path(__file__).read_bytes()).hexdigest(),
         'claim': sha256(json.dumps(claim.to_dict(), sort_keys=True).encode()).hexdigest(),
         'extra_module': None if extra_module is None else extra_module.to_dict(),
         'definitions': {
@@ -86,8 +107,22 @@ def run_claim(
 
     try:
         with _explore_context(id, bug_report) as kcfg_explore:
+            module_name = None
+            if extra_module is not None:
+                module_name = kcfg_explore.cterm_symbolic.add_module(extra_module, name_as_id=True)
+                kcfg_explore.kcfg_semantics = SorobanSemantics(module_name)
+            # APR can subsume the initial node before custom_step, or resume an already passed proof.
+            initial = proof.kcfg.node(proof.init).cterm
+            if (
+                initial.is_bottom
+                or proof.kcfg.is_vacuous(proof.init)
+                or _constraints_unsat(initial, kcfg_explore.cterm_symbolic, module_name)
+            ):
+                raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')
             prover = APRProver(kcfg_explore, extra_module=extra_module)
             prover.advance_proof(proof)
+            if proof.kcfg.node(proof.init).cterm.is_bottom or proof.kcfg.is_vacuous(proof.init):
+                raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')
     finally:
         proof.write_proof_data()
     return proof

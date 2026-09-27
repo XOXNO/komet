@@ -132,6 +132,28 @@ i128 limb comparisons and memory reads without restricting contract inputs.
 Seven focused backend regressions pass, including negative mask/bound cases,
 word overflow, zero/negative widths and partial arithmetic operands. The exact
 previously stopped half-up state simplifies under its original constraints.
+
+Further reviewed normalization exposes word arithmetic to SMT: full masks become
+Euclidean remainders, Boolean words become `if B then 1 else 0`, and signed i32/i64
+casts become piecewise arithmetic only after establishing the unsigned-word range.
+The inverse remainder-to-mask rule is removed. No contract-input bounds are added,
+and partial operands retain their definedness obligations. Regressions cover signed
+boundaries, invalid cast domains, negative integers, sparse masks and division by
+zero, plus exact saved borrower branch and terminal constraints.
+
+Before extending a state, APR now checks its complete normalized constraints with
+a typed SMT query. Only an explicit `UnsatResult` makes that path vacuous. SAT and
+Unknown continue through ordinary exploration; RPC errors propagate. The query
+retains normalization's definedness predicates and uses neither the target nor
+the desired result. A constraints-only query can establish a contradiction but
+does not certify that the full configuration has a feasible execution.
+
+The current rebuild passed 20 focused arithmetic/path regressions, one real-backend
+extra-module registration check, six existing symbolic regressions and 49 concrete
+integration checks. The exact infeasible borrower branch/terminal fixtures close;
+the initial and feasible predecessor fixtures remain open. These local checks do
+not establish a completed universal pool-property proof.
+
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
@@ -159,18 +181,27 @@ tools and a writable cache are required on macOS. The Python wheel includes
 both the C source and launcher; source exports must retain those files too.
 
 Saved proofs now record the actual claim, extra module, compiled Haskell/LLVM
-definitions and native LLVM library fingerprints in `inputs.json`. Resuming
+definitions, native LLVM library and runtime `proof.py` fingerprints in
+`inputs.json`. Resuming
 with changed or unrecorded inputs is rejected. Checkpoints are written when
 execution raises an exception or is interrupted; a checkpoint is not a proof.
-Use fresh proof directories after changing Wasm or semantics.
+Use fresh proof directories after changing Wasm, semantics or the proof runner.
+
+Before APR advancement, including resumption of an already passed proof, the runner
+rejects a syntactically bottom or marked-vacuous initial state and initial constraints
+proved UNSAT. It checks the initial bottom/vacuous status again after advancement.
+This prevents initial-state subsumption from accepting an empty-domain proof.
+Infeasible child paths may still close after an independent UNSAT query. These
+guards do not replace a separate witness for the intended initial domain.
 
 Both contract proofs and raw proofs require `PASSED`; pending and failed
 statuses propagate failure. Empty contract-test or raw-claim selections also
 fail instead of returning success. Negative controls must reach the expected
 assertion failure; a nonzero exit caused by a tool crash is inconclusive.
 
-Runtime and resume validation recorded 70 unit checks before the reporting
-repair, followed by 12 passing focused verdict/empty-selection regressions.
+Runtime, resume and verdict validation currently passes 103 unit checks, including
+explicit Unknown handling, backend errors, initial-vacuity CLI failure, resumed
+initial Bottom, module selection and runner-source fingerprint changes.
 These checks validate the tooling paths, not contract correctness.
 
 ## Run the checks

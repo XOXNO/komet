@@ -2,7 +2,6 @@ from collections.abc import Callable, Iterator
 
 import pytest
 from pyk.kast.inner import KApply, KInner, KVariable, Subst, flatten_label
-from pyk.kast.prelude.collections import list_of
 from pyk.kast.prelude.ml import is_bottom, mlAnd, mlCeil, mlEqualsTrue
 from pyk.kast.prelude.utils import token
 from pyk.konvert import kast_to_kore, kore_to_kast
@@ -56,7 +55,8 @@ def _with_i128_domain(term: KInner, sort: str) -> KInner:
 
 def test_symbolic_mask_bounds(symbolic_simplify: Callable[[KInner], KInner]) -> None:
     expressions = [bound for mask in [0, 5, MASK64] for bound in _bounds(KVariable('X', 'Int'), mask)]
-    assert symbolic_simplify(list_of(expressions)) == list_of([token(True)] * len(expressions))
+    for expression in expressions:
+        assert is_bottom(symbolic_simplify(mlEqualsTrue(KApply('notBool_', expression))))
 
 
 def test_guard_counterexamples(symbolic_simplify: Callable[[KInner], KInner]) -> None:
@@ -135,7 +135,7 @@ def test_half_up_memory_frontier(symbolic_simplify: Callable[[KInner], KInner]) 
 def test_wrap_preserves_out_of_range_values(symbolic_simplify: Callable[[KInner], KInner]) -> None:
     value = KVariable('X', 'Int')
     for width, masked in [(1, _masked(value, 5)), (8, _masked(KApply('_>>Int_', value, token(64)), MASK64))]:
-        assert symbolic_simplify(KApply(WRAP, token(width), masked)) == masked
+        assert symbolic_simplify(KApply(WRAP, token(width), masked)) == symbolic_simplify(masked)
     wrapped = symbolic_simplify(KApply(WRAP, token(1), value))
     assert wrapped != value
     for concrete, expected in [(-1, 255), (0, 0), (255, 255), (256, 0)]:
