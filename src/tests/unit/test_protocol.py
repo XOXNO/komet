@@ -11,6 +11,7 @@ from pyk.kast.inner import KVariable
 
 from komet.kasmer import ContractBinding, Kasmer
 from komet.scval import SCBoolType, SCU32Type
+from komet.utils import KSorobanError
 
 if TYPE_CHECKING:
     from pytest import MonkeyPatch
@@ -32,6 +33,63 @@ def test_contract_bindings_cli_type_fields(monkeypatch: MonkeyPatch, type_field:
     assert Kasmer.contract_bindings(reader, Path('contract.wasm')) == [  # type: ignore[arg-type]
         ContractBinding('test_roundtrip', (SCU32Type(),), (SCBoolType(),))
     ]
+
+
+def _binding_entry(name: str, unsupported: str | None = None) -> dict[str, Any]:
+    udt = {'vec': {'element_type': {'udt': {'name': 'PoolState'}}}}
+    return {
+        'function_v0': {
+            'name': name,
+            'inputs': [{'name': 'value', 'type': udt}] if unsupported == 'input' else [],
+            'outputs': [udt] if unsupported == 'output' else ['bool'],
+        }
+    }
+
+
+def _binding_reader(monkeypatch: MonkeyPatch, entries: list[dict[str, Any]]) -> Kasmer:
+    monkeypatch.setattr('komet.kasmer.run_process', lambda *args, **kwargs: SimpleNamespace(stdout=json.dumps(entries)))
+    monkeypatch.setattr(Kasmer, '_stellar_bin', Path('stellar'))
+    return object.__new__(Kasmer)
+
+
+@pytest.mark.parametrize(
+    'id, unrelated', [(None, 'pool_export'), ('test_selected', 'pool_export'), ('test_selected', 'test_other')]
+)
+@pytest.mark.parametrize('unsupported', ['input', 'output'])
+def test_read_bindings_skips_unselected_types(
+    monkeypatch: MonkeyPatch, id: str | None, unrelated: str, unsupported: str
+) -> None:
+    reader = _binding_reader(
+        monkeypatch,
+        [_binding_entry(unrelated, unsupported), _binding_entry('init'), _binding_entry('test_selected')],
+    )
+    bindings, has_init = reader.read_bindings(Path('contract.wasm'), id)
+    assert has_init
+    assert bindings == [ContractBinding('test_selected', (), (SCBoolType(),))]
+
+
+@pytest.mark.parametrize('name', ['init', 'test_selected'])
+@pytest.mark.parametrize('unsupported', ['input', 'output'])
+@pytest.mark.parametrize('id', [None, 'test_selected'])
+def test_read_bindings_rejects_selected_unsupported_types(
+    monkeypatch: MonkeyPatch, name: str, unsupported: str, id: str | None
+) -> None:
+    entries = [_binding_entry(n, unsupported if n == name else None) for n in ['init', 'test_selected']]
+    reader = _binding_reader(monkeypatch, entries)
+    with pytest.raises(KSorobanError, match="Unsupported SC value type: 'udt'"):
+        reader.read_bindings(Path('contract.wasm'), id)
+
+
+def test_contract_bindings_default_reads_every_export(monkeypatch: MonkeyPatch) -> None:
+    names = ['init', 'pool_export', 'test_selected']
+    entries = [_binding_entry(name) for name in names]
+    reader = _binding_reader(monkeypatch, entries)
+    assert reader.contract_bindings(Path('contract.wasm')) == [
+        ContractBinding(name, (), (SCBoolType(),)) for name in names
+    ]
+    entries.append(_binding_entry('unsupported_pool_export', 'input'))
+    with pytest.raises(KSorobanError, match="Unsupported SC value type: 'udt'"):
+        reader.contract_bindings(Path('contract.wasm'))
 
 
 @pytest.mark.parametrize('protocol', [21, 22, 28])

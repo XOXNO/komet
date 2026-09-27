@@ -59,7 +59,7 @@ def test_raw_proof_rejects_empty_selection(label: str | None) -> None:
 @pytest.mark.parametrize('names', [[], ['init', 'main']])
 def test_contract_run_rejects_empty_test_discovery(monkeypatch: MonkeyPatch, method: str, names: list[str]) -> None:
     kasmer = Kasmer(Mock())
-    monkeypatch.setattr(kasmer, 'contract_bindings', lambda _: [ContractBinding(name, (), ()) for name in names])
+    monkeypatch.setattr(kasmer, 'contract_bindings', lambda _, **kwargs: [ContractBinding(name, (), ()) for name in names])
     monkeypatch.setattr(kasmer, 'kast_from_wasm', lambda _: KVariable('CODE'))
     monkeypatch.setattr(kasmer, 'contract_protocol', lambda _: 28)
     deploy = Mock(return_value=(KVariable('CONF'), {}))

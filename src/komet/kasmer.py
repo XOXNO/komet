@@ -46,7 +46,7 @@ from .utils import KSorobanError, concrete_definition, subst_on_program_cell
 from .wasm import wasm2kast
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping
     from typing import Any
 
     from hypothesis.strategies import SearchStrategy
@@ -104,8 +104,10 @@ class Kasmer:
             return cmap, pmap
         return None, None
 
-    def contract_bindings(self, wasm_contract: Path) -> list[ContractBinding]:
-        """Reads a soroban wasm contract, and returns a list of the function bindings for it."""
+    def contract_bindings(
+        self, wasm_contract: Path, *, name_filter: Callable[[str], bool] | None = None
+    ) -> list[ContractBinding]:
+        """Read function bindings, optionally selecting names before parsing their types."""
         proc_res = run_process(
             [str(self._stellar_bin), 'contract', 'info', 'interface', '--output', 'json', '--wasm', str(wasm_contract)],
             check=True,
@@ -117,6 +119,8 @@ class Kasmer:
                 continue
             function_spec = spec_entry['function_v0']
             name = function_spec['name']
+            if name_filter is not None and not name_filter(name):
+                continue
             inputs = []
             for input_spec in function_spec['inputs']:
                 input_type = input_spec['type'] if 'type' in input_spec else input_spec['type_']
@@ -475,7 +479,10 @@ class Kasmer:
     def read_bindings(self, contract_wasm: Path, id: str | None) -> tuple[list[ContractBinding], bool]:
         print(f'Processing contract: {contract_wasm.stem}')
 
-        bindings = self.contract_bindings(contract_wasm)
+        bindings = self.contract_bindings(
+            contract_wasm,
+            name_filter=lambda name: name == 'init' or (name.startswith('test_') and (id is None or name == id)),
+        )
         has_init = 'init' in (b.name for b in bindings)
         test_bindings = [b for b in bindings if b.name.startswith('test_') and (id is None or b.name == id)]
 
