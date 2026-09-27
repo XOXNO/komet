@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from pyk.cterm import CTerm
+from pyk.cterm import CSubst, CTerm
+from pyk.cterm.symbolic import CTermExecute, CTermImplies
 from pyk.kast.inner import KApply, KVariable
 from pyk.kast.outer import KClaim, KFlatModule
 from pyk.kast.prelude.ml import mlAnd, mlCeil, mlEqualsTrue
-from pyk.kcfg import KCFG
+from pyk.kcfg import KCFG, KCFGExplore
 from pyk.kcfg.kcfg import Vacuous
 from pyk.kore.rpc import SatResult, UnknownResult, UnsatResult
 from pyk.proof import APRProof, ProofStatus
@@ -78,6 +79,47 @@ def test_execution_failure_preserves_checkpoint(monkeypatch: MonkeyPatch, error:
     with pytest.raises(type(error)):
         proof_module.run_claim('claim', KClaim(KVariable('CLAIM')))
     proof.write_proof_data.assert_called_once_with()
+
+
+def test_execution_chunks_checkpoint_and_resume(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    initial, middle, target = [CTerm(KApply('<generatedTop>', KApply(label))) for label in ['start', 'middle', 'end']]
+    graph = KCFG()
+    start_node, target_node = [graph.create_node(state) for state in [initial, target]]
+    proof = APRProof('claim', graph, [], start_node.id, target_node.id, {}, proof_dir=tmp_path)
+    cs = Mock()
+    cs._definition.main_module_name = 'TEST'
+    cs.implies.side_effect = lambda state, goal, **kwargs: CTermImplies(
+        CSubst() if state == goal else None, (), None, ()
+    )
+    # One completed chunk, interruption during the next RPC, then continuation after reload.
+    cs.execute.side_effect = [
+        CTermExecute(middle, (), 1000, False, ()),
+        RuntimeError('RPC disconnected'),
+        CTermExecute(target, (), 882, False, ()),
+    ]
+    explore = KCFGExplore(cs, kcfg_semantics=proof_module.SorobanSemantics())
+    monkeypatch.setattr(proof_module, '_check_proof_inputs', lambda *args: None)
+    monkeypatch.setattr(proof_module, 'symbolic_definition', lambda: SimpleNamespace(kdefinition=None))
+    monkeypatch.setattr(proof_module.APRProof, 'from_claim', lambda *args, **kwargs: proof)
+    monkeypatch.setattr(proof_module, '_explore_context', lambda *args: nullcontext(explore))
+    claim = KClaim(KVariable('CLAIM'))
+    with pytest.raises(RuntimeError, match='RPC disconnected'):
+        proof_module.run_claim('claim', claim, proof_dir=tmp_path)
+    saved = APRProof.read_proof_data(tmp_path, 'claim')
+    assert saved.status == ProofStatus.PENDING
+    assert [node.cterm for node in saved.pending] == [middle]
+    assert [edge.depth for edge in saved.kcfg.edges()] == [1000]
+    assert not saved.admitted and saved.bmc_depth is None
+    assert not any(saved.is_bounded(node.id) or saved.kcfg.is_vacuous(node.id) for node in saved.kcfg.nodes)
+
+    resumed = proof_module.run_claim('claim', claim, proof_dir=tmp_path)
+    assert resumed is not proof
+    assert resumed.status == ProofStatus.PASSED
+    assert sum(edge.depth for edge in resumed.kcfg.edges()) == 1882
+    assert not resumed.admitted and resumed.bmc_depth is None
+    assert not any(resumed.is_bounded(node.id) or resumed.kcfg.is_vacuous(node.id) for node in resumed.kcfg.nodes)
+    assert [call.kwargs['depth'] for call in cs.execute.call_args_list] == [1000, 1000, 1000]
+    assert APRProof.read_proof_data(tmp_path, 'claim').status == ProofStatus.PASSED
 
 
 @pytest.mark.parametrize('result', [SatResult(None), UnknownResult(), UnsatResult()])

@@ -119,7 +119,7 @@ def run_claim(
                 or _constraints_unsat(initial, kcfg_explore.cterm_symbolic, module_name)
             ):
                 raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')
-            prover = APRProver(kcfg_explore, extra_module=extra_module)
+            prover = APRProver(kcfg_explore, execute_depth=1000, extra_module=extra_module)
             prover.advance_proof(proof)
             if proof.kcfg.node(proof.init).cterm.is_bottom or proof.kcfg.is_vacuous(proof.init):
                 raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')
