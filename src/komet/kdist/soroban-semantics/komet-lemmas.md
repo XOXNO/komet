@@ -80,6 +80,18 @@ module INT-BITWISE-LEMMAS [symbolic]
     requires 0 <Int B andBool isPowerOf2(B) andBool M ==Int (2 *Int B)
     [simplification, concrete(B, M)]
 
+  // Complemented low bits cannot overlap X, including when X is negative.
+  // Keep default definedness: the repeated operand may be a partial expression.
+  rule [masked-complement-and-right]:
+      ((X xorInt MASK) modInt M) &Int X => 0
+    requires 0 <Int M andBool isPowerOf2(M) andBool MASK ==Int M -Int 1
+    [simplification, concrete(MASK, M)]
+
+  rule [masked-complement-and-left]:
+      X &Int ((X xorInt MASK) modInt M) => 0
+    requires 0 <Int M andBool isPowerOf2(M) andBool MASK ==Int M -Int 1
+    [simplification, concrete(MASK, M)]
+
   // Arithmetic right shift is floor division, including negative dividends.
   rule [constant-right-shift]:
       I >>Int SHIFT => I divInt (2 ^Int SHIFT)

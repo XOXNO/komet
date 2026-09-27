@@ -171,6 +171,14 @@ Its 116 parsed concrete modules match the preceding model after normalizing
 source metadata and module ordering. This validates the normalization repairs;
 the broad pool arithmetic proofs remain incomplete.
 
+Two additional guarded rules eliminate a word masked by its own complement,
+in either AND orientation. They require a positive power-of-two modulus and
+its complete low-bit mask, with default definedness retained. The combined
+revision passes 90 backend checks, including the complete original impossible
+half-up branches and feasible siblings. Modulus one can lose the matching
+XOR shape to an earlier rule; ground and partial-operand checks retain that
+case, but symbolic normalization to zero is not guaranteed there.
+
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
