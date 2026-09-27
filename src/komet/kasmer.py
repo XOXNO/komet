@@ -456,6 +456,8 @@ class Kasmer:
             for sent in module.sentences
             if isinstance(sent, KClaim) and (label is None or sent.label == label)
         ]
+        if not claims:
+            raise KSorobanError(f'No matching claims found in {claim_file} (label: {label!r}).')
 
         for claim in claims:
             print('Proving:', claim.label, 'at', claim.source)
@@ -463,11 +465,11 @@ class Kasmer:
             proof: EqualityProof | APRProof
             if is_functional(claim):
                 proof = run_functional_claim(claim, proof_dir, bug_report)
-                if proof.status == ProofStatus.FAILED:
+                if proof.status != ProofStatus.PASSED:
                     raise KSorobanError(proof)
             else:
                 proof = run_claim(claim.label, claim, self.extra_module, proof_dir, bug_report)
-                if proof.status == ProofStatus.FAILED:
+                if proof.status != ProofStatus.PASSED:
                     raise KSorobanError(proof.summary)
 
     def read_bindings(self, contract_wasm: Path, id: str | None) -> tuple[list[ContractBinding], bool]:
@@ -478,6 +480,8 @@ class Kasmer:
         test_bindings = [b for b in bindings if b.name.startswith('test_') and (id is None or b.name == id)]
 
         if id is None:
+            if not test_bindings:
+                raise KeyError('No test functions found.')
             print(f'Discovered {len(test_bindings)} test functions:')
         elif not test_bindings:
             raise KeyError(f'Test function {id!r} not found.')

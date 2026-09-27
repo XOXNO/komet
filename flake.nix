@@ -9,6 +9,7 @@
 
     wasm-semantics.url = "github:runtimeverification/wasm-semantics/v0.1.155";
     wasm-semantics.inputs.nixpkgs.follows = "nixpkgs";
+    wasm-semantics.inputs.k-framework.url = "github:runtimeverification/k/v7.1.337";
     k-framework.follows = "wasm-semantics/k-framework";
 
     uv2nix.url = "github:pyproject-nix/uv2nix/be511633027f67beee87ab499f7b16d0a2f7eceb";

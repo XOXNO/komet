@@ -1,5 +1,7 @@
 setExitCode(1)
 
+;; Promote packed small inputs before using native object-only limb imports.
+
 uploadWasm( b"test-wasm",
 (module $test_wasm
   (import "i" "g" (func $obj_from_i256_pieces (param i64 i64 i64 i64) (result i64)))
@@ -16,7 +18,20 @@ uploadWasm( b"test-wasm",
   (import "i" "z" (func $i256_rem_euclid (param i64 i64) (result i64)))
 
   ;; Split a value into its four 64-bit words and reassemble it.
+  (func $asObject (param i64) (result i64) (local i64)
+    (if (result i64)
+      (i64.eq (i64.and (local.get 0) (i64.const 255)) (i64.const 13))
+      (then
+        (local.set 1 (i64.shr_s (local.get 0) (i64.const 8)))
+        (call $obj_from_i256_pieces
+          (i64.shr_s (local.get 1) (i64.const 63))
+          (i64.shr_s (local.get 1) (i64.const 63))
+          (i64.shr_s (local.get 1) (i64.const 63))
+          (local.get 1)))
+      (else (local.get 0)))
+  )
   (func $roundtrip (param i64) (result i64)
+    (local.set 0 (call $asObject (local.get 0)))
     (call $obj_from_i256_pieces
       (call $obj_to_i256_hi_hi (local.get 0))
       (call $obj_to_i256_hi_lo (local.get 0))
@@ -36,12 +51,14 @@ uploadWasm( b"test-wasm",
   )
   ;; The four extractors on their own, widened to i256 so the result is checkable.
   (func $hiHi (param i64) (result i64)
+    (local.set 0 (call $asObject (local.get 0)))
     (call $obj_from_i256_pieces
       (i64.const 0) (i64.const 0) (i64.const 0)
       (call $obj_to_i256_hi_hi (local.get 0))
     )
   )
   (func $loLo (param i64) (result i64)
+    (local.set 0 (call $asObject (local.get 0)))
     (call $obj_from_i256_pieces
       (i64.const 0) (i64.const 0) (i64.const 0)
       (call $obj_to_i256_lo_lo (local.get 0))
@@ -268,7 +285,7 @@ callTx(
   Contract(b"test-sc"),
   "add",
   ListItem(I256(2 ^Int 255 -Int 1)) ListItem(I256(1)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
 )
 
 callTx(
@@ -292,7 +309,7 @@ callTx(
   Contract(b"test-sc"),
   "sub",
   ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(1)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
 )
 
 callTx(
@@ -317,7 +334,7 @@ callTx(
   Contract(b"test-sc"),
   "mul",
   ListItem(I256(2 ^Int 200)) ListItem(I256(2 ^Int 200)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
 )
 
 ;; Division truncates toward zero.
@@ -358,7 +375,7 @@ callTx(
   Contract(b"test-sc"),
   "div",
   ListItem(I256(1)) ListItem(I256(0)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
 )
 
 ;; i256::MIN / -1 is the one division that overflows.
@@ -367,7 +384,7 @@ callTx(
   Contract(b"test-sc"),
   "div",
   ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 1)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
 )
 
 ;; Euclidean modulo is never negative, whatever the signs of the operands.
@@ -408,7 +425,120 @@ callTx(
   Contract(b"test-sc"),
   "rem",
   ListItem(I256(1)) ListItem(I256(0)),
-  Error(ErrValue, ArithDomain)
+  Error(ErrObject, ArithDomain)
+)
+
+;; SDK 28: invalid byte lengths, signed limits, and MIN rem(-1).
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "roundtripBytesInv",
+  ListItem(ScBytes(b"")),
+  Error(ErrObject, UnexpectedSize)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "roundtripBytesInv",
+  ListItem(ScBytes(b"abcdefghabcdefghabcdefghabcdefg")),
+  Error(ErrObject, UnexpectedSize)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "roundtripBytesInv",
+  ListItem(ScBytes(b"abcdefghabcdefghabcdefghabcdefghi")),
+  Error(ErrObject, UnexpectedSize)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "add",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 1)),
+  Error(ErrObject, ArithDomain)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "sub",
+  ListItem(I256(2 ^Int 255 -Int 1)) ListItem(I256(0 -Int 1)),
+  Error(ErrObject, ArithDomain)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "mul",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(1)),
+  I256(0 -Int 2 ^Int 255)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "mul",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 1)),
+  Error(ErrObject, ArithDomain)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "div",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(1)),
+  I256(0 -Int 2 ^Int 255)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "div",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 2 ^Int 255)),
+  I256(1)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "rem",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 1)),
+  Error(ErrObject, ArithDomain)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "rem",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(1)),
+  I256(0)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "rem",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(0 -Int 2 ^Int 255)),
+  I256(0)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "rem",
+  ListItem(I256(0 -Int 1)) ListItem(I256(0 -Int 2 ^Int 255)),
+  I256(2 ^Int 255 -Int 1)
+)
+
+callTx(
+  Account(b"test-caller"),
+  Contract(b"test-sc"),
+  "rem",
+  ListItem(I256(0 -Int 2 ^Int 255)) ListItem(I256(3)),
+  I256(1)
 )
 
 setExitCode(0)

@@ -88,27 +88,112 @@ condition values through the concrete backend.
 
 Proof conclusions apply to the implemented transitions and these assumptions.
 
-## Symbolic validation status
+## Integer model repairs
 
-The SDK 28 round-trip fixture passes concrete execution and fuzzing. Its symbolic
-proof is not yet established: the default booster RPC disconnects during
-execution, while a simple SDK 28 adder proof succeeds under the same semantics.
-Treat the added models as experimental for symbolic workloads until this failure
-is resolved. Concrete test results do not establish a formal proof.
+The numeric host model now matches the checked cases for:
+
+- Allocated `U256`/`I256` values use object tags 70/71, including small values
+  and intermediate results under `--always-allocate`.
+- Limb constructors return objects even for zero. Object-only limb accessors
+  reject packed small integers and malformed object tags before argument
+  decoding loses that distinction.
+- Checked signed and unsigned add, subtract, multiply and divide reject
+  overflow or zero divisors with the native `Object/ArithDomain` error.
+  Signed division also rejects `I256::MIN / -1`.
+- Signed Euclidean remainder returns a nonnegative result on its valid domain,
+  but rejects both zero divisors and `I256::MIN % -1`, as the native host does.
+- Integer byte constructors reject lengths other than 32 bytes with
+  `Object/UnexpectedSize`.
+
+The repair validation recorded 95 K integration checks: 49 concrete and 46
+tracing checks. An independent replay of the numeric fixtures passed 89 cases
+against `soroban-env-host` 28.0.2. These are checked examples and error paths,
+not a universal equivalence proof of the model and native host.
+
+## Symbolic arithmetic trust boundary
+
+The optional inherited `KWASM-LEMMAS` module has been removed from
+[`komet-lemmas.md`](../src/komet/kdist/soroban-semantics/komet-lemmas.md).
+Review flagged nine identities there. Six negative-shift examples fall outside
+K's declared defined domain and are not counted as established proof-soundness
+defects. The other candidates concern modulus, signed right-shift and memory
+writes. A real symbolic backend
+reproduced the unsound simplification `(X << 3) mod 3 => 0`; at `X = 1`, the
+correct remainder is `2`.
+
+Freshly rebuilt definitions use the base KWasm/K arithmetic semantics and the
+explicitly retained Soroban lemmas, without that optional optimization module.
+Two independently reviewed rules preserve reads outside a written byte range,
+with nonnegative address/width guards. A reviewed `X &Int 0 => 0` rule retains
+the default definedness obligation; no `preserves-definedness` exemption is used.
+Removing the whole import avoids trusting the remaining unreviewed identities
+in that module. It may make proofs slower; it does not justify weakening claims.
+
+**Older arithmetic proofs are provisional and must be rerun.** The earlier
+95 integer-model checks above were also rerun after removal and the guarded
+memory rules; all passed. A dedicated symbolic regression rejects the original
+modulus corruption and checks the replacement memory rules. No new general arithmetic
+theorem is accepted from the replacement definitions yet. A previously passing
+adder, isolated identity or concrete SDK round-trip does not establish that
+arithmetic-bearing pool properties are proved. Compilation, fuzzing, a saved
+checkpoint and a backend crash are not symbolic proof verdicts.
+
+## Runtime and result integrity
+
+On macOS, the Booster launcher interposes default worker-thread creation to
+provide 64 MiB native stacks. This addresses recursive LLVM serialization that
+could terminate Booster with `SIGBUS`; raising the main process stack alone did
+not repair it. Explicit thread attributes are preserved. The workaround is
+finite and changes execution resources, not the mathematical model. It does
+not guarantee that every symbolic workload terminates.
+
+The launcher builds `native_stack.c` with `xcrun clang` into a content-addressed
+cache, then executes Booster with its original arguments. Xcode command-line
+tools and a writable cache are required on macOS. The Python wheel includes
+both the C source and launcher; source exports must retain those files too.
+
+Saved proofs now record the actual claim, extra module, compiled Haskell/LLVM
+definitions and native LLVM library fingerprints in `inputs.json`. Resuming
+with changed or unrecorded inputs is rejected. Checkpoints are written when
+execution raises an exception or is interrupted; a checkpoint is not a proof.
+Use fresh proof directories after changing Wasm or semantics.
+
+Both contract proofs and raw proofs require `PASSED`; pending and failed
+statuses propagate failure. Empty contract-test or raw-claim selections also
+fail instead of returning success. Negative controls must reach the expected
+assertion failure; a nonzero exit caused by a tool crash is inconclusive.
+
+Runtime and resume validation recorded 70 unit checks before the reporting
+repair, followed by 12 passing focused verdict/empty-selection regressions.
+These checks validate the tooling paths, not contract correctness.
 
 ## Run the checks
 
-Use the repository's [development setup](../CONTRIBUTING.md#setup), including K,
-Rust and the compatible Stellar CLI. From the repository root, build the semantics
-and run a direct host fixture plus the SDK contract smoke test:
+The recorded SDK 28 environment uses Stellar CLI 28.0.0, Rust 1.95.0, native K
+and Python `kframework`/pyk 7.1.337, and KWasm 0.1.155. The older
+[development setup](../CONTRIBUTING.md#setup) mentions Stellar CLI 23; use CLI 28
+for these SDK 28 harnesses. `pyproject.toml` and `uv.lock` pin pyk 7.1.337;
+`deps/k_release` and the nested Nix K input pin the same native K release.
+KWasm remains 0.1.155. Normal `uv run` now uses the recorded pyk version without
+a command-line package override.
+
+From the repository root, with native K and its backend tools on `PATH`, build
+fresh definitions after the lemma removal:
 
 ```sh
-make kdist-build
-uv run komet run src/tests/integration/data/sparse_map.wast
-uv run komet test -C src/tests/integration/data/soroban/contracts/test_sdk28 \
+uv sync --locked --python 3.10
+export XDG_CACHE_HOME="$PWD/.komet-cache"
+if [ "$(uname -sm)" = 'Darwin arm64' ]; then export APPLE_SILICON=true; fi
+uv run --locked komet-kdist -v build -j2 'soroban-semantics.*'
+uv run --locked komet run src/tests/integration/data/sparse_map.wast
+uv run --locked komet test \
+  -C src/tests/integration/data/soroban/contracts/test_sdk28 \
   --id test_roundtrip --max-examples 1
-uv run pytest src/tests/unit/test_protocol.py src/tests/unit/test_wasm.py
+uv run --locked pytest src/tests/unit
 ```
+
+Keep that same cache and locked environment for later runs. These are reproduction
+commands; this document does not claim a fresh post-removal run has completed.
 
 The SDK fixture exercises optional struct fields, storage, XDR and string copying.
 One fuzzing example is a smoke check, not a proof. Other direct fixtures cover
@@ -116,5 +201,8 @@ XDR, strings, both hashes, invalid crypto arguments, deployment and added value
 types. Run their concrete and tracing variants together with:
 
 ```sh
-make test-integration TEST_ARGS='-k "test_run and (sparse_map or xdr or string_memory or crypto or sdk28)"'
+uv run --locked pytest src/tests/integration \
+  -k 'test_run and (sparse_map or xdr or string_memory or crypto or sdk28)'
+uv run --locked pytest src/tests/integration \
+  -k 'i256 or u256 or integer_abi'
 ```

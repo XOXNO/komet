@@ -653,7 +653,7 @@ wheels = [
 
 [[package]]
 name = "kframework"
-version = "7.1.323"
+version = "7.1.337"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "coloredlogs" },
@@ -672,9 +672,9 @@ dependencies = [
     { name = "tomli-w" },
     { name = "xdg-base-dirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/d9/a88f051a023540ea9bbab889183bb87e01869c4ebf6565de32bd5b93b439/kframework-7.1.323.tar.gz", hash = "sha256:29f1ef525a29ba2a1410614ce05c4526e6e44b977232ca107f50ff2750d4e149", size = 245892, upload-time = "2026-05-12T14:44:19.937Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/14/b5e751e5be5c591cedfc8814a3e77ae729c145d89886fc9a18cf50b22938/kframework-7.1.337.tar.gz", hash = "sha256:9fdd05f228988757c9daee58564b45af424f0bc205912b0dd24b3d35a066b287", size = 253667, upload-time = "2026-06-18T13:51:13.311Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/db/d555255f53fdb36ffdcdfb303529f07e939018ddb58a4392eb13f19dbe4d/kframework-7.1.323-py3-none-any.whl", hash = "sha256:d0b23ccf44babb5e3ac735e00242d0a41435864ec66012d761cf6718aee53413", size = 297459, upload-time = "2026-05-12T14:44:18.443Z" },
+    { url = "https://files.pythonhosted.org/packages/57/0e/e9a214527eb818915e6820c353d7b6078eb7611a34ebc285bdbf8ff7316b/kframework-7.1.337-py3-none-any.whl", hash = "sha256:f8e0ba4effda64c1f10fbc306518e7485e1b24ddef9706021b2bbfc04ab5cb7d", size = 305216, upload-time = "2026-06-18T13:51:11.807Z" },
 ]
 
 [[package]]
@@ -682,6 +682,7 @@ name = "komet"
 version = "0.1.89"
 source = { editable = "." }
 dependencies = [
+    { name = "kframework" },
     { name = "pykwasm" },
     { name = "tomli" },
     { name = "tomli-w" },
@@ -709,6 +710,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "kframework", specifier = "==7.1.337" },
     { name = "pykwasm", git = "https://github.com/runtimeverification/wasm-semantics.git?subdirectory=pykwasm&rev=v0.1.155" },
     { name = "tomli", specifier = ">=2.4.0" },
     { name = "tomli-w", specifier = ">=1.2.0" },

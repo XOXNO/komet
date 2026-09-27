@@ -47,11 +47,8 @@ module HOST-ARGUMENTS
        andBool getIndex(V) <Int size(OBJS)
     rule hostKnownAbsolute(_, _) => false [owise]
 
-    // getTagWithFlag lacks forced-small U256/I256 cases in the inherited model.
     syntax Int ::= hostObjectTag(ScVal) [function, total]
-    rule hostObjectTag(U256(_)) => 70
-    rule hostObjectTag(I256(_)) => 71
-    rule hostObjectTag(V) => getTagWithFlag(true, V) [owise]
+    rule hostObjectTag(V) => getTagWithFlag(true, V)
 
     syntax Bool ::= hostValidVal(HostVal, List, List) [function, total]
     rule hostValidVal(V, _, _) => getBody(V) ==Int 0 requires getTag(V) <=Int 2

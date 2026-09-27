@@ -2,9 +2,14 @@ import json
 from pathlib import Path
 
 import pytest
+from pyk.kast.inner import KSort, Subst
+from pyk.kast.manip import split_config_from
+from pyk.kast.prelude.utils import token
 from pyk.kdist import kdist
+from pyk.konvert import kore_to_kast
+from pyk.kore.parser import KoreParser
 from pyk.kore.prelude import str_dv
-from pyk.ktool.krun import _krun
+from pyk.ktool.krun import KRunOutput, _krun
 
 from komet.kasmer import Kasmer
 from komet.komet import _read_config_file
@@ -39,6 +44,24 @@ def tracing_kasmer() -> Kasmer:
 def test_run(program: Path, tmp_path: Path) -> None:
     # Runs wast files with the LLVM backend.
     _krun(input_file=program, definition_dir=DEFINITION_DIR, check=True)
+
+
+@pytest.mark.parametrize('name', ['i256', 'u256', 'integer_abi'])
+def test_integer_forced_allocation(name: str) -> None:
+    """Small 256-bit values must retain their value when allocated as objects."""
+    definition = concrete_definition()
+    initial = _krun(
+        input_file=TEST_DATA / f'{name}.wast',
+        definition_dir=definition.path,
+        depth=0,
+        output=KRunOutput.KORE,
+        check=False,
+    )
+    kast = kore_to_kast(definition.kdefinition, KoreParser(initial.stdout).pattern())
+    conf, subst = split_config_from(kast)
+    subst['ALWAYSALLOCATE_CELL'] = token(True)
+    result = definition.krun_with_kast(Subst(subst).apply(conf), sort=KSort('GeneratedTopCell'), term=True)
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize('program', TEST_FILES, ids=str)

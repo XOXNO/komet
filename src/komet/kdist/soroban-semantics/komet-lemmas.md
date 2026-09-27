@@ -1,9 +1,9 @@
 ```k
-requires "wasm-semantics/kwasm-lemmas.md"
 requires "data.md"
 
 module KSOROBAN-LEMMAS [symbolic]
-  imports KWASM-LEMMAS
+  // KWasm 0.1.155's optional trusted lemmas include false shift/modulus and
+  // memory-write identities. Keep base semantics, without those optimizations.
   imports INT-BITWISE-LEMMAS
   imports HOST-OBJECT-LEMMAS
   imports SOROBAN
@@ -21,6 +21,8 @@ module INT-BITWISE-LEMMAS [symbolic]
 
   rule C |Int S => S |Int C [simplification, concrete(C), symbolic(S)]
   rule X |Int 0 => X        [simplification]
+  // Keep the default definedness obligation for the erased operand.
+  rule _X &Int 0 => 0       [simplification]
 
   rule  A &Int  B          =>  B &Int  A          [simplification, concrete(A), symbolic(B)]
   rule (A &Int  B) &Int C  =>  A &Int (B  &Int C) [simplification, concrete(B, C)]
@@ -64,6 +66,23 @@ module HOST-OBJECT-LEMMAS [symbolic]
      andBool 0 <=Int VAL andBool VAL <Int 2 ^Int (8 *Int WIDTH)
      andBool ADDR'  ==Int ADDR
      andBool WIDTH' <=Int WIDTH
+    [simplification]
+
+  // Disjoint reads are unchanged; negative values make #setRange a no-op.
+  rule [getRange-before-setRange]:
+      #getRange(#setRange(BM, ADDR, _VAL, WIDTH), READ_ADDR, READ_WIDTH)
+        => #getRange(BM, READ_ADDR, READ_WIDTH)
+    requires 0 <=Int ADDR andBool 0 <=Int WIDTH
+     andBool 0 <=Int READ_ADDR andBool 0 <=Int READ_WIDTH
+     andBool READ_ADDR +Int READ_WIDTH <=Int ADDR
+    [simplification]
+
+  rule [getRange-after-setRange]:
+      #getRange(#setRange(BM, ADDR, _VAL, WIDTH), READ_ADDR, READ_WIDTH)
+        => #getRange(BM, READ_ADDR, READ_WIDTH)
+    requires 0 <=Int ADDR andBool 0 <=Int WIDTH
+     andBool 0 <=Int READ_ADDR andBool 0 <=Int READ_WIDTH
+     andBool ADDR +Int WIDTH <=Int READ_ADDR
     [simplification]
 
 endmodule

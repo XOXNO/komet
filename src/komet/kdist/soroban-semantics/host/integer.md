@@ -109,17 +109,33 @@ module HOST-INTEGER
         <hostStack> I128(I) : S => S </hostStack>
 ```
 
+## Object-only 256-bit limb arguments
+
+Check the original Val before `loadArgs` discards the distinction between an
+object and a packed small integer. Constructors return objects even for zero.
+
+```k
+    rule [hostfun-u256-limb-invalid]:
+        <instrs> hostCall("i", F, [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+        <locals> 0 |-> < i64 > V </locals>
+      requires (F ==String "c" orBool F ==String "d" orBool F ==String "e" orBool F ==String "f")
+       andBool (getTag(HostVal(V)) =/=Int 70 orBool getMinor(HostVal(V)) =/=Int 0)
+
+    rule [hostfun-i256-limb-invalid]:
+        <instrs> hostCall("i", F, [ i64 .ValTypes ] -> [ i64 .ValTypes ])
+              => #throw(ErrValue, InvalidInput) ... </instrs>
+        <locals> 0 |-> < i64 > V </locals>
+      requires (F ==String "j" orBool F ==String "k" orBool F ==String "l" orBool F ==String "m")
+       andBool (getTag(HostVal(V)) =/=Int 71 orBool getMinor(HostVal(V)) =/=Int 0)
+```
+
 ## obj_from_u256_pieces
 
 ```k
     rule [hostfun-obj-from-u256-pieces]:
         <instrs> hostCall ( "i" , "9" , [ i64 i64 i64  i64  .ValTypes ] -> [ i64  .ValTypes ] )
-              => allocObject( U256(
-                       (HI_HI <<Int 192) 
-                  |Int (HI_LO <<Int 128) 
-                  |Int (LO_HI <<Int 64) 
-                  |Int  LO_LO
-                ))
+              => #waitCommands
               ~> returnHostVal
                  ...
         </instrs>
@@ -129,6 +145,12 @@ module HOST-INTEGER
           2 |-> < i64 > LO_HI
           3 |-> < i64 > LO_LO
         </locals>
+        <k> (.K => addObject( U256(
+                       (HI_HI <<Int 192)
+                  |Int (HI_LO <<Int 128)
+                  |Int (LO_HI <<Int 64)
+                  |Int  LO_LO
+                ))) ... </k>
 ```
 
 ## u256_val_from_be_bytes
@@ -144,6 +166,11 @@ Convert a 32-byte `Bytes` object to `U256`.
         </instrs>
         <hostStack> ScBytes(BS) : S => S </hostStack>
       requires lengthBytes(BS) ==Int 32
+
+    rule [hostCallAux-u256-val-from-be-bytes-size]:
+        <instrs> hostCallAux ( "i" , "a" ) => #throw(ErrObject, UnexpectedSize) ... </instrs>
+        <hostStack> ScBytes(BS) : S => S </hostStack>
+      requires lengthBytes(BS) =/=Int 32
 ```
 
 ## u256_val_to_be_bytes
@@ -201,6 +228,11 @@ Convert a 32-byte `Bytes` object to `U256`.
         </instrs>
         <hostStack> U256(A) : U256(B) : S => S </hostStack>
       requires inRangeInt(i256, Unsigned, A +Int B)
+
+    rule [hostCallAux-u256-add-error]:
+        <instrs> hostCallAux ( "i" , "n" ) => #throw(ErrObject, ArithDomain) ... </instrs>
+        <hostStack> U256(A) : U256(B) : S => S </hostStack>
+      requires notBool inRangeInt(i256, Unsigned, A +Int B)
 ```
 
 ## u256_sub
@@ -214,6 +246,11 @@ Convert a 32-byte `Bytes` object to `U256`.
         </instrs>
         <hostStack> U256(A) : U256(B) : S => S </hostStack>
       requires inRangeInt(i256, Unsigned, A -Int B)
+
+    rule [hostCallAux-u256-sub-error]:
+        <instrs> hostCallAux ( "i" , "o" ) => #throw(ErrObject, ArithDomain) ... </instrs>
+        <hostStack> U256(A) : U256(B) : S => S </hostStack>
+      requires notBool inRangeInt(i256, Unsigned, A -Int B)
 ```
 
 ## u256_mul
@@ -227,6 +264,11 @@ Convert a 32-byte `Bytes` object to `U256`.
         </instrs>
         <hostStack> U256(A) : U256(B) : S => S </hostStack>
       requires inRangeInt(i256, Unsigned, A *Int B)
+
+    rule [hostCallAux-u256-mul-error]:
+        <instrs> hostCallAux ( "i" , "p" ) => #throw(ErrObject, ArithDomain) ... </instrs>
+        <hostStack> U256(A) : U256(B) : S => S </hostStack>
+      requires notBool inRangeInt(i256, Unsigned, A *Int B)
 ```
 
 ## u256_div
@@ -240,6 +282,11 @@ Convert a 32-byte `Bytes` object to `U256`.
         </instrs>
         <hostStack> U256(A) : U256(B) : S => S </hostStack>
       requires 0 =/=Int B
+
+    rule [hostCallAux-u256-div-error]:
+        <instrs> hostCallAux ( "i" , "q" ) => #throw(ErrObject, ArithDomain) ... </instrs>
+        <hostStack> U256(_A) : U256(B) : S => S </hostStack>
+      requires B ==Int 0
 ```
 
 ## obj_from_i256_pieces
@@ -251,12 +298,7 @@ then reinterpreted as signed.
 ```k
     rule [hostfun-obj-from-i256-pieces]:
         <instrs> hostCall ( "i" , "g" , [ i64 i64 i64  i64  .ValTypes ] -> [ i64  .ValTypes ] )
-              => allocObject( I256( #signed(i256,
-                       (HI_HI <<Int 192)
-                  |Int (HI_LO <<Int 128)
-                  |Int (LO_HI <<Int 64)
-                  |Int  LO_LO
-                )))
+              => #waitCommands
               ~> returnHostVal
                  ...
         </instrs>
@@ -266,6 +308,12 @@ then reinterpreted as signed.
           2 |-> < i64 > LO_HI
           3 |-> < i64 > LO_LO
         </locals>
+        <k> (.K => addObject( I256( #signed(i256,
+                       (HI_HI <<Int 192)
+                  |Int (HI_LO <<Int 128)
+                  |Int (LO_HI <<Int 64)
+                  |Int  LO_LO
+                )))) ... </k>
       requires definedSigned(i256,
                    (HI_HI <<Int 192)
               |Int (HI_LO <<Int 128)
@@ -287,6 +335,11 @@ Convert a 32-byte `Bytes` object to `I256`, sign-extending from the high bit.
         </instrs>
         <hostStack> ScBytes(BS) : S => S </hostStack>
       requires lengthBytes(BS) ==Int 32
+
+    rule [hostCallAux-i256-val-from-be-bytes-size]:
+        <instrs> hostCallAux ( "i" , "h" ) => #throw(ErrObject, UnexpectedSize) ... </instrs>
+        <hostStack> ScBytes(BS) : S => S </hostStack>
+      requires lengthBytes(BS) =/=Int 32
 ```
 
 ## i256_val_to_be_bytes
@@ -351,7 +404,7 @@ negative value is converted to its unsigned form before shifting.
 
 The i256 arithmetic host functions are *checked*: the result must be
 representable, and the divisor must be non-zero. Otherwise the host fails the
-call with `(ErrValue, ArithDomain)` rather than wrapping around.
+call with `(ErrObject, ArithDomain)` rather than wrapping around.
 
 The first Wasm argument is on top of the host stack (`loadArgs` pushes the
 arguments in reverse), so `A` is the left-hand side.
@@ -367,7 +420,7 @@ arguments in reverse), so `A` is the left-hand side.
       requires inRangeInt(i256, Signed, A +Int B)
 
     rule [hostCallAux-i256-add-overflow]:
-        <instrs> hostCallAux ( "i" , "v" ) => #throw(ErrValue, ArithDomain) ... </instrs>
+        <instrs> hostCallAux ( "i" , "v" ) => #throw(ErrObject, ArithDomain) ... </instrs>
         <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires notBool inRangeInt(i256, Signed, A +Int B)
 ```
@@ -385,7 +438,7 @@ arguments in reverse), so `A` is the left-hand side.
       requires inRangeInt(i256, Signed, A -Int B)
 
     rule [hostCallAux-i256-sub-overflow]:
-        <instrs> hostCallAux ( "i" , "w" ) => #throw(ErrValue, ArithDomain) ... </instrs>
+        <instrs> hostCallAux ( "i" , "w" ) => #throw(ErrObject, ArithDomain) ... </instrs>
         <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires notBool inRangeInt(i256, Signed, A -Int B)
 ```
@@ -403,7 +456,7 @@ arguments in reverse), so `A` is the left-hand side.
       requires inRangeInt(i256, Signed, A *Int B)
 
     rule [hostCallAux-i256-mul-overflow]:
-        <instrs> hostCallAux ( "i" , "x" ) => #throw(ErrValue, ArithDomain) ... </instrs>
+        <instrs> hostCallAux ( "i" , "x" ) => #throw(ErrObject, ArithDomain) ... </instrs>
         <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires notBool inRangeInt(i256, Signed, A *Int B)
 ```
@@ -427,12 +480,12 @@ rather than range-checking `A /Int B`, so no side condition divides.
       [preserves-definedness] // 'A /Int B' is defined for non-zero B
 
     rule [hostCallAux-i256-div-by-zero]:
-        <instrs> hostCallAux ( "i" , "y" ) => #throw(ErrValue, ArithDomain) ... </instrs>
+        <instrs> hostCallAux ( "i" , "y" ) => #throw(ErrObject, ArithDomain) ... </instrs>
         <hostStack> I256(_A) : I256(B) : S => S </hostStack>
       requires B ==Int 0
 
     rule [hostCallAux-i256-div-overflow]:
-        <instrs> hostCallAux ( "i" , "y" ) => #throw(ErrValue, ArithDomain) ... </instrs>
+        <instrs> hostCallAux ( "i" , "y" ) => #throw(ErrObject, ArithDomain) ... </instrs>
         <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires A ==Int minInt(i256, Signed) andBool B ==Int -1
 ```
@@ -441,8 +494,8 @@ rather than range-checking `A /Int B`, so no side condition divides.
 
 Euclidean modulo: the result is always non-negative, whatever the signs of the
 operands. K's `modInt` takes the sign of its divisor, so dividing by `absInt(B)`
-gives exactly Rust's `rem_euclid`. The quotient never leaves the range, so a
-zero divisor is the only failure.
+gives the successful result. The native checked operation rejects both a zero
+divisor and `i256::MIN % -1`, even though the latter's remainder would be zero.
 
 ```k
     rule [hostCallAux-i256-rem-euclid]:
@@ -453,12 +506,14 @@ zero divisor is the only failure.
         </instrs>
         <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires B =/=Int 0
+       andBool notBool (A ==Int minInt(i256, Signed) andBool B ==Int -1)
       [preserves-definedness] // 'A modInt absInt(B)' is defined for non-zero B
 
     rule [hostCallAux-i256-rem-euclid-error]:
-        <instrs> hostCallAux ( "i" , "z" ) => #throw(ErrValue, ArithDomain) ... </instrs>
-        <hostStack> I256(_A) : I256(B) : S => S </hostStack>
+        <instrs> hostCallAux ( "i" , "z" ) => #throw(ErrObject, ArithDomain) ... </instrs>
+        <hostStack> I256(A) : I256(B) : S => S </hostStack>
       requires B ==Int 0
+        orBool (A ==Int minInt(i256, Signed) andBool B ==Int -1)
 ```
 
 ```k
