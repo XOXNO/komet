@@ -36,6 +36,7 @@ def _explore_context(id: str, bug_report: BugReport | None) -> Iterator[KCFGExpl
         definition_dir=symbolic_definition().path.resolve(),
         llvm_definition_dir=library_definition().path.resolve(),
         kore_rpc_command=booster_command(),
+        smt_timeout=5000,
         id=id if bug_report else None,
         bug_report=bug_report,
     ) as cts:

@@ -49,6 +49,7 @@ def test_explore_context_preserves_caller_paths_and_report(
         'definition_dir': tmp_path / 'haskell',
         'llvm_definition_dir': tmp_path / 'llvm',
         'kore_rpc_command': proof_module.booster_command(),
+        'smt_timeout': 5000,
         'id': 'original-claim' if report else None,
         'bug_report': report,
     }
