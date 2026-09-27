@@ -24,6 +24,18 @@ module INT-BITWISE-LEMMAS [symbolic]
   // Keep the default definedness obligation for the erased operand.
   rule _X &Int 0 => 0       [simplification]
 
+  // A nonnegative mask selects a subset of its set bits, even for negative X.
+  // Keep default definedness checks: X may itself be a partial expression.
+  rule [masked-int-nonnegative]:
+      0 <=Int (_X &Int MASK) => true
+    requires 0 <=Int MASK
+    [simplification, concrete(MASK)]
+
+  rule [masked-int-upper-bound]:
+      (_X &Int MASK) <Int BOUND => true
+    requires 0 <=Int MASK andBool MASK <Int BOUND
+    [simplification, concrete(MASK, BOUND)]
+
   rule  A &Int  B          =>  B &Int  A          [simplification, concrete(A), symbolic(B)]
   rule (A &Int  B) &Int C  =>  A &Int (B  &Int C) [simplification, concrete(B, C)]
   rule  A &Int (B  &Int C) => (A &Int  B) &Int C  [simplification, symbolic(A, B)]
@@ -59,6 +71,11 @@ module HOST-OBJECT-LEMMAS [symbolic]
   rule #getRange(SB, ADDR, 8) &Int 18446744073709551615 => #getRange(SB, ADDR, 8)
     [simplification]
 
+  rule [wrap-in-range]:
+      #wrap(WIDTH, N) => N
+    requires 0 <Int WIDTH
+     andBool 0 <=Int N andBool N <Int (1 <<Int (8 *Int WIDTH))
+    [simplification, concrete(WIDTH)]
 
   rule #getRange(#setRange(_BM, ADDR, VAL,  WIDTH), ADDR', WIDTH') => #wrap(WIDTH', VAL)
     requires 0 <=Int ADDR

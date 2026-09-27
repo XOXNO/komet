@@ -126,6 +126,12 @@ explicitly retained Soroban lemmas, without that optional optimization module.
 Two independently reviewed rules preserve reads outside a written byte range,
 with nonnegative address/width guards. A reviewed `X &Int 0 => 0` rule retains
 the default definedness obligation; no `preserves-definedness` exemption is used.
+Three further guarded rules establish nonnegative masked-word bounds and
+unwrap values already within the requested byte width. They repair unresolved
+i128 limb comparisons and memory reads without restricting contract inputs.
+Seven focused backend regressions pass, including negative mask/bound cases,
+word overflow, zero/negative widths and partial arithmetic operands. The exact
+previously stopped half-up state simplifies under its original constraints.
 Removing the whole import avoids trusting the remaining unreviewed identities
 in that module. It may make proofs slower; it does not justify weakening claims.
 
