@@ -59,6 +59,19 @@ module INT-BITWISE-LEMMAS [symbolic]
       I &Int MASK => I modInt (MASK +Int 1) requires isFullMask(MASK)
     [simplification, concrete(MASK)]
 
+  // A power-of-two modulus selects low bits, which OR cannot cancel.
+  rule [masked-or-zero-right]:
+      ((A |Int B) modInt M) ==Int 0
+        => (A modInt M ==Int 0) andBool (B modInt M ==Int 0)
+    requires 0 <Int M andBool isPowerOf2(M)
+    [simplification, concrete(M)]
+
+  rule [masked-or-zero-left]:
+      0 ==Int ((A |Int B) modInt M)
+        => (A modInt M ==Int 0) andBool (B modInt M ==Int 0)
+    requires 0 <Int M andBool isPowerOf2(M)
+    [simplification, concrete(M)]
+
   // Arithmetic right shift is floor division, including negative dividends.
   rule [constant-right-shift]:
       I >>Int SHIFT => I divInt (2 ^Int SHIFT)
@@ -80,6 +93,30 @@ endmodule
 module HOST-OBJECT-LEMMAS [symbolic]
   imports HOST-OBJECT
   imports INT-BITWISE-LEMMAS
+
+  // In this domain, minWidth(N) lies between zero and C modInt M.
+  // Keep default definedness checks, especially when a constant arm erases N.
+  rule [bounded-min-width-comparison-nonpositive]:
+      B >Int ((C -Int #minWidth(N)) modInt M) => false
+    requires 0 <Int M
+     andBool 0 <=Int N andBool N <Int (2 ^Int (C modInt M))
+     andBool B <=Int 0
+    [simplification, concrete(B, C, M)]
+
+  rule [bounded-min-width-comparison-above]:
+      B >Int ((C -Int #minWidth(N)) modInt M) => true
+    requires 0 <Int M
+     andBool 0 <=Int N andBool N <Int (2 ^Int (C modInt M))
+     andBool B >Int (C modInt M)
+    [simplification, concrete(B, C, M)]
+
+  rule [bounded-min-width-comparison-threshold]:
+      B >Int ((C -Int #minWidth(N)) modInt M)
+        => N >=Int (2 ^Int ((C modInt M) -Int B))
+    requires 0 <Int M
+     andBool 0 <=Int N andBool N <Int (2 ^Int (C modInt M))
+     andBool 0 <Int B andBool B <=Int (C modInt M)
+    [simplification, concrete(B, C, M)]
 
   rule [boolean-word-value]:
       #bool(B:Bool) => #if B #then 1 #else 0 #fi
