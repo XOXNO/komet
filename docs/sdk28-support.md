@@ -141,6 +141,13 @@ and partial operands retain their definedness obligations. Regressions cover sig
 boundaries, invalid cast domains, negative integers, sparse masks and division by
 zero, plus exact saved borrower branch and terminal constraints.
 
+Constant nonnegative right shifts now use Euclidean division, including negative
+integers. Unsigned conversion becomes piecewise arithmetic only within its declared
+mixed signed/unsigned domain, `[-2^(w-1), 2^w)`. Four 64-bit limbs become a weighted
+sum only when every limb lies in `[0, 2^64)`. Tests independently exercise each lower
+and upper guard and preserve undefined partial operands. These rules close the
+saved half-up error path using all 12 original constraints without new premises.
+
 Before extending a state, APR now checks its complete normalized constraints with
 a typed SMT query. Only an explicit `UnsatResult` makes that path vacuous. SAT and
 Unknown continue through ordinary exploration; RPC errors propagate. The query
@@ -148,9 +155,9 @@ retains normalization's definedness predicates and uses neither the target nor
 the desired result. A constraints-only query can establish a contradiction but
 does not certify that the full configuration has a feasible execution.
 
-The current rebuild passed 20 focused arithmetic/path regressions, one real-backend
-extra-module registration check, six existing symbolic regressions and 49 concrete
-integration checks. The exact infeasible borrower branch/terminal fixtures close;
+The current rebuild passed 31 focused arithmetic/path/module checks, six existing
+symbolic regressions and 49 concrete integration checks. The exact infeasible
+borrower branch/terminal fixtures and the saved half-up error path close;
 the initial and feasible predecessor fixtures remain open. These local checks do
 not establish a completed universal pool-property proof.
 

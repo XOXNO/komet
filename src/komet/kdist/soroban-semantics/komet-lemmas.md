@@ -57,6 +57,22 @@ module INT-BITWISE-LEMMAS [symbolic]
       I &Int MASK => I modInt (MASK +Int 1) requires isFullMask(MASK)
     [simplification, concrete(MASK)]
 
+  // Arithmetic right shift is floor division, including negative dividends.
+  rule [constant-right-shift]:
+      I >>Int SHIFT => I divInt (2 ^Int SHIFT)
+    requires 0 <=Int SHIFT
+    [simplification, concrete(SHIFT)]
+
+  // Bounded limbs occupy disjoint bit ranges; all operands remain defined.
+  rule [pack-four-u64-limbs]:
+      (((A <<Int 192) |Int (B <<Int 128)) |Int (C <<Int 64)) |Int D
+        => A *Int (2 ^Int 192) +Int B *Int (2 ^Int 128) +Int C *Int (2 ^Int 64) +Int D
+    requires 0 <=Int A andBool A <Int (2 ^Int 64)
+     andBool 0 <=Int B andBool B <Int (2 ^Int 64)
+     andBool 0 <=Int C andBool C <Int (2 ^Int 64)
+     andBool 0 <=Int D andBool D <Int (2 ^Int 64)
+    [simplification]
+
 endmodule
 
 module HOST-OBJECT-LEMMAS [symbolic]
@@ -88,6 +104,13 @@ module HOST-OBJECT-LEMMAS [symbolic]
       #signedTotal(W:IValType, N)
         => #if N <Int #pow1(W) #then N #else N -Int #pow(W) #fi
     requires 0 <=Int N andBool N <Int #pow(W)
+    [simplification, concrete(W)]
+
+  // Match definedUnsigned's mixed signed/unsigned domain, including its upper half.
+  rule [unsigned-in-range]:
+      #unsigned(W:IWidth, N)
+        => #if N <Int 0 #then N +Int #pow(W) #else N #fi
+    requires 0 -Int #pow1(W) <=Int N andBool N <Int #pow(W)
     [simplification, concrete(W)]
 
   rule #getRange(#setRange(_BM, ADDR, VAL,  WIDTH), ADDR', WIDTH') => #wrap(WIDTH', VAL)

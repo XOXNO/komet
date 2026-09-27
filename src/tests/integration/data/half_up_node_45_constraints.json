@@ -1,0 +1,2753 @@
+[
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KVariable",
+            "name": "ARG_0",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KToken",
+            "token": "170141183460469231731687303715884105727",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KVariable",
+            "name": "ARG_1",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KToken",
+            "token": "170141183460469231731687303715884105727",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KVariable",
+            "name": "ARG_2",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KToken",
+            "token": "170141183460469231731687303715884105727",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "-170141183460469231731687303715884105728",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KVariable",
+            "name": "ARG_0",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "-170141183460469231731687303715884105728",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KVariable",
+            "name": "ARG_1",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_<=Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "-170141183460469231731687303715884105728",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KVariable",
+            "name": "ARG_2",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_==Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "0",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "boolToInt",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_==Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "_&Int_",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_>>Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KVariable",
+                            "name": "ARG_2",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          },
+                          {
+                            "node": "KToken",
+                            "token": "64",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      },
+                      {
+                        "node": "KToken",
+                        "token": "18446744073709551615",
+                        "sort": {
+                          "node": "KSort",
+                          "name": "Int",
+                          "params": []
+                        }
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  },
+                  {
+                    "node": "KToken",
+                    "token": "0",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              }
+            ],
+            "arity": 1,
+            "variable": false
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_==Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "0",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "boolToInt",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_<Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "#signedTotal",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "i64",
+                          "params": []
+                        },
+                        "args": [],
+                        "arity": 0,
+                        "variable": false
+                      },
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_&Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_>>Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KVariable",
+                                "name": "ARG_2",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "64",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KToken",
+                            "token": "18446744073709551615",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  },
+                  {
+                    "node": "KToken",
+                    "token": "0",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              }
+            ],
+            "arity": 1,
+            "variable": false
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "_==Int_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KToken",
+            "token": "0",
+            "sort": {
+              "node": "KSort",
+              "name": "Int",
+              "params": []
+            }
+          },
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "boolToInt",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_<Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "#signedTotal",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "i64",
+                          "params": []
+                        },
+                        "args": [],
+                        "arity": 0,
+                        "variable": false
+                      },
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_&Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_|Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_>>Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KVariable",
+                                        "name": "ARG_0",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      },
+                                      {
+                                        "node": "KToken",
+                                        "token": "64",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_>>Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KVariable",
+                                        "name": "ARG_1",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      },
+                                      {
+                                        "node": "KToken",
+                                        "token": "64",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KToken",
+                            "token": "18446744073709551615",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  },
+                  {
+                    "node": "KToken",
+                    "token": "0",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              }
+            ],
+            "arity": 1,
+            "variable": false
+          }
+        ],
+        "arity": 2,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "notBool_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "_==Int_",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KToken",
+                "token": "0",
+                "sort": {
+                  "node": "KSort",
+                  "name": "Int",
+                  "params": []
+                }
+              },
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "boolToInt",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "_<Int_",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "#signedTotal",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "i64",
+                              "params": []
+                            },
+                            "args": [],
+                            "arity": 0,
+                            "variable": false
+                          },
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_&Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_&Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_xorInt_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "_&Int_",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_xorInt_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "0",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  },
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KApply",
+                                                        "label": {
+                                                          "node": "KLabel",
+                                                          "name": "_&Int_",
+                                                          "params": []
+                                                        },
+                                                        "args": [
+                                                          {
+                                                            "node": "KApply",
+                                                            "label": {
+                                                              "node": "KLabel",
+                                                              "name": "_>>Int_",
+                                                              "params": []
+                                                            },
+                                                            "args": [
+                                                              {
+                                                                "node": "KVariable",
+                                                                "name": "ARG_2",
+                                                                "sort": {
+                                                                  "node": "KSort",
+                                                                  "name": "Int",
+                                                                  "params": []
+                                                                }
+                                                              },
+                                                              {
+                                                                "node": "KToken",
+                                                                "token": "64",
+                                                                "sort": {
+                                                                  "node": "KSort",
+                                                                  "name": "Int",
+                                                                  "params": []
+                                                                }
+                                                              }
+                                                            ],
+                                                            "arity": 2,
+                                                            "variable": false
+                                                          },
+                                                          {
+                                                            "node": "KToken",
+                                                            "token": "18446744073709551615",
+                                                            "sort": {
+                                                              "node": "KSort",
+                                                              "name": "Int",
+                                                              "params": []
+                                                            }
+                                                          }
+                                                        ],
+                                                        "arity": 2,
+                                                        "variable": false
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "1",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KToken",
+                                                "token": "18446744073709551615",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KToken",
+                                        "token": "18446744073709551615",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_xorInt_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KToken",
+                                        "token": "0",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_&Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "_>>Int_",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_&Int_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KVariable",
+                                                        "name": "ARG_2",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "64",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  },
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "18446744073709551615",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KToken",
+                                                "token": "1",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "18446744073709551615",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      },
+                      {
+                        "node": "KToken",
+                        "token": "0",
+                        "sort": {
+                          "node": "KSort",
+                          "name": "Int",
+                          "params": []
+                        }
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  }
+                ],
+                "arity": 1,
+                "variable": false
+              }
+            ],
+            "arity": 2,
+            "variable": false
+          }
+        ],
+        "arity": 1,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "notBool_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "_==Int_",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KToken",
+                "token": "0",
+                "sort": {
+                  "node": "KSort",
+                  "name": "Int",
+                  "params": []
+                }
+              },
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_&Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "_|Int_",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "boolToInt",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_==Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_|Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_&Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "_>>Int_",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KVariable",
+                                                "name": "ARG_0",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              },
+                                              {
+                                                "node": "KToken",
+                                                "token": "64",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_&Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i128",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KVariable",
+                                                "name": "ARG_0",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "0",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          }
+                        ],
+                        "arity": 1,
+                        "variable": false
+                      },
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "boolToInt",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_==Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_|Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_&Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "_>>Int_",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KVariable",
+                                                "name": "ARG_1",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              },
+                                              {
+                                                "node": "KToken",
+                                                "token": "64",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_&Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i128",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KVariable",
+                                                "name": "ARG_1",
+                                                "sort": {
+                                                  "node": "KSort",
+                                                  "name": "Int",
+                                                  "params": []
+                                                }
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "18446744073709551615",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "0",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          }
+                        ],
+                        "arity": 1,
+                        "variable": false
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  },
+                  {
+                    "node": "KToken",
+                    "token": "4294967295",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              }
+            ],
+            "arity": 2,
+            "variable": false
+          }
+        ],
+        "arity": 1,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  },
+  {
+    "node": "KApply",
+    "label": {
+      "node": "KLabel",
+      "name": "#Equals",
+      "params": [
+        {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        },
+        {
+          "node": "KSort",
+          "name": "GeneratedTopCell",
+          "params": []
+        }
+      ]
+    },
+    "args": [
+      {
+        "node": "KToken",
+        "token": "true",
+        "sort": {
+          "node": "KSort",
+          "name": "Bool",
+          "params": []
+        }
+      },
+      {
+        "node": "KApply",
+        "label": {
+          "node": "KLabel",
+          "name": "notBool_",
+          "params": []
+        },
+        "args": [
+          {
+            "node": "KApply",
+            "label": {
+              "node": "KLabel",
+              "name": "_andBool_",
+              "params": []
+            },
+            "args": [
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_<=Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KToken",
+                    "token": "0",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  },
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "_|Int_",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_|Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_|Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_<<Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "i64",
+                                          "params": []
+                                        },
+                                        "args": [],
+                                        "arity": 0,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_>>Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#signedTotal",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i64",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_&Int_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KVariable",
+                                                        "name": "ARG_0",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "64",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  },
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "18446744073709551615",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "63",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "192",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_<<Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "i64",
+                                          "params": []
+                                        },
+                                        "args": [],
+                                        "arity": 0,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_>>Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#signedTotal",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i64",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_&Int_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KVariable",
+                                                        "name": "ARG_0",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "64",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  },
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "18446744073709551615",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "63",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "128",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_<<Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_>>Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KVariable",
+                                        "name": "ARG_0",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      },
+                                      {
+                                        "node": "KToken",
+                                        "token": "64",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "64",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      },
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_&Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "i128",
+                                  "params": []
+                                },
+                                "args": [],
+                                "arity": 0,
+                                "variable": false
+                              },
+                              {
+                                "node": "KVariable",
+                                "name": "ARG_0",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KToken",
+                            "token": "18446744073709551615",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              },
+              {
+                "node": "KApply",
+                "label": {
+                  "node": "KLabel",
+                  "name": "_<Int_",
+                  "params": []
+                },
+                "args": [
+                  {
+                    "node": "KApply",
+                    "label": {
+                      "node": "KLabel",
+                      "name": "_|Int_",
+                      "params": []
+                    },
+                    "args": [
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_|Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_|Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_<<Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "i64",
+                                          "params": []
+                                        },
+                                        "args": [],
+                                        "arity": 0,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_>>Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#signedTotal",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i64",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_&Int_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KVariable",
+                                                        "name": "ARG_0",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "64",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  },
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "18446744073709551615",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "63",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "192",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_<<Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "i64",
+                                          "params": []
+                                        },
+                                        "args": [],
+                                        "arity": 0,
+                                        "variable": false
+                                      },
+                                      {
+                                        "node": "KApply",
+                                        "label": {
+                                          "node": "KLabel",
+                                          "name": "_>>Int_",
+                                          "params": []
+                                        },
+                                        "args": [
+                                          {
+                                            "node": "KApply",
+                                            "label": {
+                                              "node": "KLabel",
+                                              "name": "#signedTotal",
+                                              "params": []
+                                            },
+                                            "args": [
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "i64",
+                                                  "params": []
+                                                },
+                                                "args": [],
+                                                "arity": 0,
+                                                "variable": false
+                                              },
+                                              {
+                                                "node": "KApply",
+                                                "label": {
+                                                  "node": "KLabel",
+                                                  "name": "_&Int_",
+                                                  "params": []
+                                                },
+                                                "args": [
+                                                  {
+                                                    "node": "KApply",
+                                                    "label": {
+                                                      "node": "KLabel",
+                                                      "name": "_>>Int_",
+                                                      "params": []
+                                                    },
+                                                    "args": [
+                                                      {
+                                                        "node": "KVariable",
+                                                        "name": "ARG_0",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      },
+                                                      {
+                                                        "node": "KToken",
+                                                        "token": "64",
+                                                        "sort": {
+                                                          "node": "KSort",
+                                                          "name": "Int",
+                                                          "params": []
+                                                        }
+                                                      }
+                                                    ],
+                                                    "arity": 2,
+                                                    "variable": false
+                                                  },
+                                                  {
+                                                    "node": "KToken",
+                                                    "token": "18446744073709551615",
+                                                    "sort": {
+                                                      "node": "KSort",
+                                                      "name": "Int",
+                                                      "params": []
+                                                    }
+                                                  }
+                                                ],
+                                                "arity": 2,
+                                                "variable": false
+                                              }
+                                            ],
+                                            "arity": 2,
+                                            "variable": false
+                                          },
+                                          {
+                                            "node": "KToken",
+                                            "token": "63",
+                                            "sort": {
+                                              "node": "KSort",
+                                              "name": "Int",
+                                              "params": []
+                                            }
+                                          }
+                                        ],
+                                        "arity": 2,
+                                        "variable": false
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "128",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "_<<Int_",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "_&Int_",
+                                  "params": []
+                                },
+                                "args": [
+                                  {
+                                    "node": "KApply",
+                                    "label": {
+                                      "node": "KLabel",
+                                      "name": "_>>Int_",
+                                      "params": []
+                                    },
+                                    "args": [
+                                      {
+                                        "node": "KVariable",
+                                        "name": "ARG_0",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      },
+                                      {
+                                        "node": "KToken",
+                                        "token": "64",
+                                        "sort": {
+                                          "node": "KSort",
+                                          "name": "Int",
+                                          "params": []
+                                        }
+                                      }
+                                    ],
+                                    "arity": 2,
+                                    "variable": false
+                                  },
+                                  {
+                                    "node": "KToken",
+                                    "token": "18446744073709551615",
+                                    "sort": {
+                                      "node": "KSort",
+                                      "name": "Int",
+                                      "params": []
+                                    }
+                                  }
+                                ],
+                                "arity": 2,
+                                "variable": false
+                              },
+                              {
+                                "node": "KToken",
+                                "token": "64",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      },
+                      {
+                        "node": "KApply",
+                        "label": {
+                          "node": "KLabel",
+                          "name": "_&Int_",
+                          "params": []
+                        },
+                        "args": [
+                          {
+                            "node": "KApply",
+                            "label": {
+                              "node": "KLabel",
+                              "name": "#unsigned(_,_)_WASM-DATA-INTERNAL-SYNTAX_Int_IWidth_Int",
+                              "params": []
+                            },
+                            "args": [
+                              {
+                                "node": "KApply",
+                                "label": {
+                                  "node": "KLabel",
+                                  "name": "i128",
+                                  "params": []
+                                },
+                                "args": [],
+                                "arity": 0,
+                                "variable": false
+                              },
+                              {
+                                "node": "KVariable",
+                                "name": "ARG_0",
+                                "sort": {
+                                  "node": "KSort",
+                                  "name": "Int",
+                                  "params": []
+                                }
+                              }
+                            ],
+                            "arity": 2,
+                            "variable": false
+                          },
+                          {
+                            "node": "KToken",
+                            "token": "18446744073709551615",
+                            "sort": {
+                              "node": "KSort",
+                              "name": "Int",
+                              "params": []
+                            }
+                          }
+                        ],
+                        "arity": 2,
+                        "variable": false
+                      }
+                    ],
+                    "arity": 2,
+                    "variable": false
+                  },
+                  {
+                    "node": "KToken",
+                    "token": "115792089237316195423570985008687907853269984665640564039457584007913129639936",
+                    "sort": {
+                      "node": "KSort",
+                      "name": "Int",
+                      "params": []
+                    }
+                  }
+                ],
+                "arity": 2,
+                "variable": false
+              }
+            ],
+            "arity": 2,
+            "variable": false
+          }
+        ],
+        "arity": 1,
+        "variable": false
+      }
+    ],
+    "arity": 2,
+    "variable": false
+  }
+]
