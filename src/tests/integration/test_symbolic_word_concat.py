@@ -237,12 +237,13 @@ def test_actual_half_two_feasible_sibling_is_preserved(concat_explore: KCFGExplo
     assert set(state.constraints) == set(constraints)
 
 
-def test_u64_or_projection_uses_exact_smt(
-    concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner]
+@pytest.mark.parametrize('operator,wrapper', [('_|Int_', 'u64Or'), ('_xorInt_', 'u64Xor')])
+def test_u64_bitwise_projection_uses_exact_smt(
+    concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner], operator: str, wrapper: str
 ) -> None:
     x, y = KVariable('X', 'Int'), KVariable('Y', 'Int')
-    wrapped = KApply('u64Or', x, y)
-    projected = KApply('_modInt_', KApply('_|Int_', x, y), token(BASE))
+    wrapped = KApply(wrapper, x, y)
+    projected = KApply('_modInt_', KApply(operator, x, y), token(BASE))
     assert concat_simplify(projected) == wrapped
     assert concat_simplify(wrapped) == wrapped
     cs = concat_explore.cterm_symbolic
@@ -250,29 +251,33 @@ def test_u64_or_projection_uses_exact_smt(
         KApply('_orBool_', KApply('_<Int_', wrapped, token(0)), KApply('_<=Int_', token(BASE), wrapped))
     )
     assert isinstance(cs._kore_client.get_model(cs.kast_to_kore(outside_range)), UnsatResult)
-    wrong_unbounded_identity = mlEqualsTrue(KApply('_=/=Int_', KApply('u64Or', x, token(0)), x))
+    wrong_unbounded_identity = mlEqualsTrue(KApply('_=/=Int_', KApply(wrapper, x, token(0)), x))
     assert isinstance(cs._kore_client.get_model(cs.kast_to_kore(wrong_unbounded_identity)), SatResult)
 
 
-def test_u64_or_projection_native_values_and_other_widths(concat_simplify: Callable[[KInner], KInner]) -> None:
+@pytest.mark.parametrize('operator,wrapper', [('_|Int_', 'u64Or'), ('_xorInt_', 'u64Xor')])
+def test_u64_bitwise_projection_native_values_and_other_widths(
+    concat_simplify: Callable[[KInner], KInner], operator: str, wrapper: str
+) -> None:
     x, y = KVariable('X', 'Int'), KVariable('Y', 'Int')
     for width in [32, 128]:
-        expression = KApply('_modInt_', KApply('_|Int_', x, y), token(1 << width))
-        assert not _has_label(concat_simplify(expression), 'u64Or')
+        expression = KApply('_modInt_', KApply(operator, x, y), token(1 << width))
+        assert not _has_label(concat_simplify(expression), wrapper)
     for a, b in [(-1, 0), (-(1 << 129) - 1, (1 << 128) + 7), (BASE + 1, 1 << 63)]:
-        native = KApply('_modInt_', KApply('_|Int_', token(a), token(b)), token(BASE))
-        assert concat_simplify(native) == concat_simplify(KApply('u64Or', token(a), token(b))) == token(
-            (a | b) % BASE
+        native = KApply('_modInt_', KApply(operator, token(a), token(b)), token(BASE))
+        assert concat_simplify(native) == concat_simplify(KApply(wrapper, token(a), token(b))) == token(
+            ((a | b) if operator == '_|Int_' else (a ^ b)) % BASE
         )
 
 
-def test_u64_or_projection_preserves_partial_pruning(
-    concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner]
+@pytest.mark.parametrize('operator,wrapper', [('_|Int_', 'u64Or'), ('_xorInt_', 'u64Xor')])
+def test_u64_bitwise_projection_preserves_partial_pruning(
+    concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner], operator: str, wrapper: str
 ) -> None:
     integer, predicate_sort = SortApp('SortInt'), SortApp('SortGeneratedTopCell')
     one, zero = DV(integer, String('1')), DV(integer, String('0'))
     undefined = App("Lbl'Unds'divInt'Unds'", args=(one, zero))
-    wrapped = App('Lblu64Or', args=(undefined, zero))
+    wrapped = App('Lbl' + wrapper, args=(undefined, zero))
     predicate = Equals(integer, predicate_sort, wrapped, App("Lbl'UndsPlus'Int'Unds'", args=(wrapped, one)))
     cs = concat_explore.cterm_symbolic
     assert isinstance(cs._kore_client.get_model(predicate), UnsatResult)
@@ -284,7 +289,30 @@ def test_u64_or_projection_preserves_partial_pruning(
 
     quotient = KApply('_/Int_', KVariable('X', 'Int'), KVariable('D', 'Int'))
     for a, b in [(quotient, token(-1)), (token(-1), quotient), (quotient, quotient)]:
-        projected = KApply('_modInt_', KApply('_|Int_', a, b), token(BASE))
+        projected = KApply('_modInt_', KApply(operator, a, b), token(BASE))
         result = concat_simplify(projected)
         bad = Subst({'X': token(1), 'D': token(0)}).apply(result)
         _assert_undefined(concat_simplify, bad)
+
+
+def test_u64_shift32_projection_preserves_values_and_partiality(
+    concat_simplify: Callable[[KInner], KInner],
+) -> None:
+    value = KVariable('X', 'Int')
+    projected = KApply('_modInt_', KApply('_<<Int_', value, token(32)), token(BASE))
+    expected = KApply('_*Int_', KApply('_modInt_', value, token(1 << 32)), token(1 << 32))
+    result = concat_simplify(projected)
+    assert result == expected and concat_simplify(result) == result
+    for concrete in [-(1 << 400), -BASE - 1, -1, 0, 1, BASE - 1, (1 << 400) + 7]:
+        subst = Subst({'X': token(concrete)})
+        assert concat_simplify(subst.apply(projected)) == concat_simplify(subst.apply(result)) == token(
+            (concrete << 32) % BASE
+        )
+    for shift in [31, 33]:
+        assert _has_label(
+            concat_simplify(KApply('_modInt_', KApply('_<<Int_', value, token(shift)), token(BASE))), '_<<Int_'
+        )
+    quotient = KApply('_/Int_', value, KVariable('D', 'Int'))
+    partial = concat_simplify(Subst({'X': quotient}).apply(projected))
+    _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(partial))
+    assert concat_simplify(Subst({'X': token(-3), 'D': token(1)}).apply(partial)) == token((-3 << 32) % BASE)

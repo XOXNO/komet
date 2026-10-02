@@ -16,13 +16,23 @@ module KSOROBAN-LEMMAS [symbolic]
 endmodule
 
 module INT-BITWISE-LEMMAS [symbolic]
-  imports U64-OR-SMT
+  imports U64-BITWISE-SMT
   imports INT
   imports BOOL
 
   // Exact low-word projection; retain both operands and their definedness.
   rule [project-u64-or]:
       (A |Int B) modInt 18446744073709551616 => #u64Or(A, B)
+    [simplification]
+
+  rule [project-u64-xor]:
+      (A xorInt B) modInt 18446744073709551616 => #u64Xor(A, B)
+    [simplification]
+
+  // A 32-bit shift leaves exactly the original low32 bits in the low64 word.
+  rule [project-u64-shift32]:
+      (A <<Int 32) modInt 18446744073709551616
+        => (A modInt 4294967296) *Int 4294967296
     [simplification]
 
   rule C |Int S => S |Int C [simplification, concrete(C), symbolic(S)]
@@ -227,7 +237,7 @@ module HOST-OBJECT-LEMMAS [symbolic]
 
 endmodule
 
-module U64-OR-SMT
+module U64-BITWISE-SMT
   imports INT
 
   syntax Int ::= "#u64Or" "(" Int "," Int ")"
@@ -236,6 +246,14 @@ module U64-OR-SMT
 
   rule [u64-or-native]:
       #u64Or(X, Y) => (X |Int Y) modInt 18446744073709551616
+    [concrete]
+
+  syntax Int ::= "#u64Xor" "(" Int "," Int ")"
+    [function, total, symbol(u64Xor),
+     smt-hook((bv2int (bvxor ((_ int2bv 64) #1) ((_ int2bv 64) #2))))]
+
+  rule [u64-xor-native]:
+      #u64Xor(X, Y) => (X xorInt Y) modInt 18446744073709551616
     [concrete]
 endmodule
 ```
