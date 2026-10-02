@@ -16,8 +16,14 @@ module KSOROBAN-LEMMAS [symbolic]
 endmodule
 
 module INT-BITWISE-LEMMAS [symbolic]
+  imports U64-OR-SMT
   imports INT
   imports BOOL
+
+  // Exact low-word projection; retain both operands and their definedness.
+  rule [project-u64-or]:
+      (A |Int B) modInt 18446744073709551616 => #u64Or(A, B)
+    [simplification]
 
   rule C |Int S => S |Int C [simplification, concrete(C), symbolic(S)]
   rule X |Int 0 => X        [simplification]
@@ -219,5 +225,17 @@ module HOST-OBJECT-LEMMAS [symbolic]
      andBool ADDR +Int WIDTH <=Int READ_ADDR
     [simplification]
 
+endmodule
+
+module U64-OR-SMT
+  imports INT
+
+  syntax Int ::= "#u64Or" "(" Int "," Int ")"
+    [function, total, symbol(u64Or),
+     smt-hook((bv2int (bvor ((_ int2bv 64) #1) ((_ int2bv 64) #2))))]
+
+  rule [u64-or-native]:
+      #u64Or(X, Y) => (X |Int Y) modInt 18446744073709551616
+    [concrete]
 endmodule
 ```

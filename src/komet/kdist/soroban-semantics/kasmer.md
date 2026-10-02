@@ -39,6 +39,7 @@ module KASMER-SYNTAX-COMMON
 endmodule
 
 module KASMER
+    imports U64-OR-SMT
     imports SOROBAN
     imports CHEATCODES
     imports KASMER-SYNTAX-COMMON
