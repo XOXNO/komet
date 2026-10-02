@@ -4,7 +4,7 @@ from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 from pyk.cterm import CSubst, CTerm
@@ -152,22 +152,36 @@ def test_execution_chunks_checkpoint_and_resume(tmp_path: Path, monkeypatch: Mon
     assert APRProof.read_proof_data(tmp_path, 'claim').status == ProofStatus.PASSED
 
 
+@pytest.mark.parametrize('raw_result', [UnknownResult(), UnsatResult()])
 @pytest.mark.parametrize('result', [SatResult(None), UnknownResult(), UnsatResult()])
-def test_custom_step_requires_explicit_unsat(result: object) -> None:
+def test_custom_step_requires_explicit_unsat(raw_result: object, result: object) -> None:
     original = mlEqualsTrue(KVariable('P', 'Bool'))
     state = CTerm(KApply('<generatedTop>'), [original])
     # Model normalization adding a definedness predicate; it must reach the SMT query intact.
     normalized = mlAnd([original, mlCeil(KVariable('PARTIAL', 'Int'))])
     cs = Mock()
     cs.kast_simplify.return_value = normalized, ()
-    cs._kore_client.get_model.return_value = result
+    cs._kore_client.get_model.side_effect = [raw_result, result]
     step = proof_module.SorobanSemantics().custom_step(state, cs, 7)
     assert isinstance(step, Vacuous) == isinstance(result, UnsatResult)
     cs.kast_simplify.assert_called_once_with(mlAnd(state.constraints), module_name=None)
-    cs.kast_to_kore.assert_called_once_with(normalized)
-    cs._kore_client.get_model.assert_called_once_with(cs.kast_to_kore.return_value, module_name=None)
+    assert cs.kast_to_kore.call_args_list == [call(mlAnd(state.constraints)), call(normalized)]
+    assert cs._kore_client.get_model.call_args_list == [
+        call(cs.kast_to_kore.return_value, module_name=None),
+        call(cs.kast_to_kore.return_value, module_name=None),
+    ]
     assert state.constraints == (original,)
     cs.get_model.assert_not_called()
+
+
+def test_custom_step_raw_sat_skips_optional_pruning() -> None:
+    state = CTerm(KApply('<generatedTop>'), [mlCeil(KVariable('PARTIAL', 'Int'))])
+    cs = Mock()
+    cs._kore_client.get_model.return_value = SatResult(None)
+    assert proof_module.SorobanSemantics('EXTRA').custom_step(state, cs, 7) is None
+    cs.kast_to_kore.assert_called_once_with(mlAnd(state.constraints))
+    cs._kore_client.get_model.assert_called_once_with(cs.kast_to_kore.return_value, module_name='EXTRA')
+    cs.kast_simplify.assert_not_called()
 
 
 @pytest.mark.parametrize('stage', ['kast_simplify', 'get_model'])
@@ -285,6 +299,7 @@ def test_extra_module_used_by_preflight_and_hook(monkeypatch: MonkeyPatch) -> No
     proof_module.run_claim('claim', KClaim(KVariable('CLAIM')), extra_module=extra)
     cs.add_module.assert_called_once_with(extra, name_as_id=True)
     assert explore.kcfg_semantics.custom_step(state, cs, 3) is None
-    assert cs.kast_simplify.call_count == cs._kore_client.get_model.call_count == 2
+    assert cs.kast_simplify.call_count == 1
+    assert cs._kore_client.get_model.call_count == 2
     for call in cs.kast_simplify.call_args_list + cs._kore_client.get_model.call_args_list:
         assert call.kwargs['module_name'] == 'EXTRA'

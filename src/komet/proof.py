@@ -13,7 +13,7 @@ from pyk.kcfg import KCFGExplore
 from pyk.kcfg.kcfg import Vacuous
 from pyk.kcfg.semantics import DefaultSemantics
 from pyk.konvert import kast_to_kore, kore_to_kast
-from pyk.kore.rpc import UnsatResult
+from pyk.kore.rpc import SatResult, UnsatResult
 from pyk.proof import APRProof, APRProver
 from pyk.proof.implies import EqualityProof, ImpliesProver
 
@@ -43,11 +43,19 @@ def _explore_context(id: str, bug_report: BugReport | None) -> Iterator[KCFGExpl
         yield KCFGExplore(cts, kcfg_semantics=SorobanSemantics())
 
 
-def _constraints_unsat(c: CTerm, cs: CTermSymbolic, module_name: str | None = None) -> bool:
+def _constraints_unsat(
+    c: CTerm, cs: CTermSymbolic, module_name: str | None = None, *, sat_fast_path: bool = False
+) -> bool:
     if not c.is_bottom and not c.constraints:
         return False
     # Keep the complete normalized predicate, including any definedness conditions.
     predicate = c.config if c.is_bottom else mlAnd(c.constraints)
+    # A raw SAT answer only skips optional pruning. Raw UNSAT is insufficient:
+    # normalization must preserve the definedness of partial arithmetic.
+    if sat_fast_path and isinstance(
+        cs._kore_client.get_model(cs.kast_to_kore(predicate), module_name=module_name), SatResult
+    ):
+        return False
     normalized, _ = cs.kast_simplify(predicate, module_name=module_name)
     # CTermSymbolic.get_model conflates UNSAT and Unknown; only explicit UNSAT closes a path.
     result = cs._kore_client.get_model(cs.kast_to_kore(normalized), module_name=module_name)
@@ -59,7 +67,7 @@ class SorobanSemantics(DefaultSemantics):
         self.module_name = module_name
 
     def custom_step(self, c: CTerm, cs: CTermSymbolic, node_id: int) -> Vacuous | None:
-        return Vacuous() if _constraints_unsat(c, cs, self.module_name) else None
+        return Vacuous() if _constraints_unsat(c, cs, self.module_name, sat_fast_path=True) else None
 
 
 def _check_proof_inputs(id: str, claim: KClaim, extra_module: KFlatModule | None, proof_dir: Path | None) -> None:
