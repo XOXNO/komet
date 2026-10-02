@@ -318,6 +318,28 @@ def test_u64_shift32_projection_preserves_values_and_partiality(
     assert concat_simplify(Subst({'X': token(-3), 'D': token(1)}).apply(partial)) == token((-3 << 32) % BASE)
 
 
+def test_u64_xor_sign_survives_projection_and_partial_operands(
+    concat_simplify: Callable[[KInner], KInner],
+) -> None:
+    x, y, d = (KVariable(name, 'Int') for name in ['X', 'Y', 'D'])
+    half = token(BASE // 2)
+    for value in [KApply('u64Xor', x, y), KApply('_modInt_', KApply('_xorInt_', x, y), token(BASE))]:
+        for expression, high in [(KApply('_<Int_', value, half), False), (KApply('_<=Int_', half, value), True)]:
+            result = concat_simplify(expression)
+            assert not _has_label(result, 'u64Xor') and concat_simplify(result) == result
+            for a, b in [(-1, 0), (0, -1), (-1, -1), (0, 0), (BASE // 2, 0),
+                         (-(1 << 400) - 1, (1 << 257) + 7)]:
+                subst = Subst({'X': token(a), 'Y': token(b)})
+                expected = token(((a ^ b) % BASE >= BASE // 2) == high)
+                assert concat_simplify(subst.apply(expression)) == concat_simplify(subst.apply(result)) == expected
+    quotient = KApply('_/Int_', x, d)
+    for a, b in [(quotient, token(0)), (token(0), quotient), (quotient, quotient)]:
+        value = KApply('u64Xor', a, b)
+        for expression in [KApply('_<Int_', value, half), KApply('_<=Int_', half, value)]:
+            result = concat_simplify(expression)
+            _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(result))
+
+
 def test_u64_or_zero_survives_projection_and_partial_operands(
     concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner],
 ) -> None:

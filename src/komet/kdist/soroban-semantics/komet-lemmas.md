@@ -43,6 +43,18 @@ module INT-BITWISE-LEMMAS [symbolic]
            andBool (B modInt 18446744073709551616 ==Int 0)
     [simplification]
 
+  // Projection must preserve the existing masked XOR sign-bit simplification.
+  rule [u64-xor-sign-bit]:
+      #u64Xor(X, Y) <Int 9223372036854775808
+        => ((X modInt 18446744073709551616) <Int 9223372036854775808)
+           ==Bool ((Y modInt 18446744073709551616) <Int 9223372036854775808)
+    [simplification]
+
+  rule [u64-xor-sign-bit-complement]:
+      9223372036854775808 <=Int #u64Xor(X, Y)
+        => notBool (#u64Xor(X, Y) <Int 9223372036854775808)
+    [simplification]
+
   // A 32-bit shift leaves exactly the original low32 bits in the low64 word.
   rule [project-u64-shift32]:
       (A <<Int 32) modInt 18446744073709551616
