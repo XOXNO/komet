@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pyk.cterm import CTerm
 from pyk.kast.inner import KApply, KInner, KVariable, Subst
-from pyk.kast.prelude.ml import is_bottom, is_top, mlAnd, mlCeil, mlEqualsTrue
+from pyk.kast.prelude.ml import is_bottom, is_top, mlAnd, mlCeil, mlEquals, mlEqualsTrue
 from pyk.kast.prelude.utils import token
 from pyk.kcfg import KCFGExplore
 from pyk.kcfg.kcfg import Vacuous
@@ -316,3 +316,39 @@ def test_u64_shift32_projection_preserves_values_and_partiality(
     partial = concat_simplify(Subst({'X': quotient}).apply(projected))
     _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(partial))
     assert concat_simplify(Subst({'X': token(-3), 'D': token(1)}).apply(partial)) == token((-3 << 32) % BASE)
+
+
+def test_u64_or_zero_survives_projection_and_partial_operands(
+    concat_explore: KCFGExplore, concat_simplify: Callable[[KInner], KInner],
+) -> None:
+    x, y, d = (KVariable(name, 'Int') for name in ['X', 'Y', 'D'])
+    expected = KApply('_andBool_', *[
+        KApply('_==Int_', KApply('_modInt_', value, token(BASE)), token(0)) for value in [x, y]
+    ])
+    for value in [KApply('u64Or', x, y), KApply('_modInt_', KApply('_|Int_', x, y), token(BASE))]:
+        for a, b in [(value, token(0)), (token(0), value)]:
+            expression = KApply('_==Int_', a, b)
+            result = concat_simplify(expression)
+            assert result == concat_simplify(expected) and not _has_label(result, 'u64Or')
+            for left, right in [(0, 0), (-BASE, BASE), (-1, 0), (0, 1), (1 << 400, -(1 << 257))]:
+                subst = Subst({'X': token(left), 'Y': token(right)})
+                assert concat_simplify(subst.apply(expression)) == concat_simplify(subst.apply(result)) == token(
+                    (left | right) % BASE == 0
+                )
+    quotient = KApply('_/Int_', x, d)
+    for a, b in [(quotient, token(0)), (token(0), quotient), (quotient, token(1)), (token(1), quotient),
+                 (quotient, quotient)]:
+        for left, right in [(KApply('u64Or', a, b), token(0)), (token(0), KApply('u64Or', a, b))]:
+            result = concat_simplify(KApply('_==Int_', left, right))
+            _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(result))
+            expected_zero = a != token(1) and b != token(1)
+            assert concat_simplify(Subst({'X': token(-BASE), 'D': token(1)}).apply(result)) == token(expected_zero)
+    # The two undefined Bool denotations are equal; raw SMT must not prune them.
+    partial = KApply('_==Int_', KApply('u64Or', KApply('_divInt_', token(1), token(0)), token(1)), token(0))
+    predicate = mlEquals(partial, KApply('notBool_', partial), arg_sort='Bool')
+    cs = concat_explore.cterm_symbolic
+    pattern = cs.kast_to_kore(predicate)
+    normalized = cs._kore_client.simplify(pattern).state
+    assert normalized == Top(SortApp('SortGeneratedTopCell'))
+    assert isinstance(cs._kore_client.get_model(normalized), SatResult)
+    assert concat_explore.kcfg_semantics.custom_step(CTerm(KApply('<generatedTop>'), [predicate]), cs, 0) is None

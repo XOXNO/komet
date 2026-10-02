@@ -29,6 +29,20 @@ module INT-BITWISE-LEMMAS [symbolic]
       (A xorInt B) modInt 18446744073709551616 => #u64Xor(A, B)
     [simplification]
 
+  // Projection may run before the general masked-OR rules below.
+  // Retain both operands and the default definedness obligations.
+  rule [u64-or-zero-right]:
+      #u64Or(A, B) ==Int 0
+        => (A modInt 18446744073709551616 ==Int 0)
+           andBool (B modInt 18446744073709551616 ==Int 0)
+    [simplification]
+
+  rule [u64-or-zero-left]:
+      0 ==Int #u64Or(A, B)
+        => (A modInt 18446744073709551616 ==Int 0)
+           andBool (B modInt 18446744073709551616 ==Int 0)
+    [simplification]
+
   // A 32-bit shift leaves exactly the original low32 bits in the low64 word.
   rule [project-u64-shift32]:
       (A <<Int 32) modInt 18446744073709551616
