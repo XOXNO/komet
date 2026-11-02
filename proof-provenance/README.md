@@ -19,7 +19,7 @@ Mac binary, or Nix store output is published here.
 | Python | `3.10.14` |
 | pykwasm | `0.1.155`, semantics revision `bd5cbe7bfb3aafbeb4740884fed905394b542320` in `XOXNO/wasm-semantics` |
 | Original installed komet metadata | `0.1.77`; actual imported source is identified by the hashes below |
-| Patched backend | `XOXNO/haskell-backend`, branch `proof/booster-v6-compact-rpc`, commit `ba6bac8f48c0a830f93efc9568e1fbebaa04f732` |
+| Patched backend | `XOXNO/haskell-backend`, branch `proof/booster-v6-compact-rpc`, commit `818a5e4c79275505c3adaadf1d6a6338362c5b47` |
 | Backend version / build | `0.1.155`, original name `hs-backend-booster-0.1.155-v6-compact-rpc`, aarch64-darwin |
 | Stellar CLI | `28.0.0` |
 | Rust | `1.95.0` |
@@ -77,7 +77,7 @@ These files and all original artifacts remain local and unchanged.
 ## Linux source build
 
 Clone this Komet branch and check out backend
-`ba6bac8f48c0a830f93efc9568e1fbebaa04f732`. The Komet source and overlay
+`818a5e4c79275505c3adaadf1d6a6338362c5b47`. The Komet source and overlay
 revisions above identify the preserved executable bytes; use the current
 setup instructions and verify their source hashes. Checking out an earlier
 source revision also checks out older documentation.
