@@ -1,0 +1,133 @@
+{
+  "checked_at": "2026-10-07T07:44:05.938567+00:00",
+  "process": {
+    "exit_code": 0,
+    "wall_seconds": 189,
+    "wall_cap_seconds": 600,
+    "forced_stop_grace_seconds": 15,
+    "started_at": "2026-10-07T07:39:28Z",
+    "program": "komet",
+    "id": "test_borrow_double",
+    "continuation": true
+  },
+  "native_status": "PASSED",
+  "formal_positive_proof": true,
+  "pending": [],
+  "failing": [],
+  "nodes": 47,
+  "steps": 5871,
+  "covers": [
+    [
+      13,
+      2
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      22,
+      2
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      40,
+      2
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      42,
+      2
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      44,
+      2
+    ],
+    [
+      45,
+      2
+    ],
+    [
+      46,
+      2
+    ],
+    [
+      47,
+      2
+    ]
+  ],
+  "new_covers_from_T": [
+    [
+      40,
+      2
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      42,
+      2
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      44,
+      2
+    ],
+    [
+      45,
+      2
+    ],
+    [
+      46,
+      2
+    ],
+    [
+      47,
+      2
+    ]
+  ],
+  "admitted": false,
+  "bounded": [],
+  "circularity": false,
+  "refutations": {},
+  "subproof_ids": [],
+  "stuck": [],
+  "vacuous": [],
+  "initial_target_identical_to_T": true,
+  "native_fingerprint_identical_to_T": true,
+  "saved_files": 50,
+  "saved_manifest_sha256": "b67b39221f965feb75468fc276287fd3ee1df8ff895190ff390d32db5b2d4baa",
+  "graph_writes_by_checker": false,
+  "backend_execution_by_checker": false,
+  "verification_kind": "Read-only native APR loader and artifact integrity checks; not independent certificate replay.",
+  "pins_before_after": 6522,
+  "source_files_verified_before_after": 49,
+  "copied_files_verified_before_run": 49,
+  "frozen_T_files_verified": 78,
+  "frozen_S_files_verified": 83,
+  "negative_control_review": {
+    "path": "/Users/mihaieremia/.codex/visualizations/2026/09/26/01a0ded9-99d4-7d02-bbb7-d1cb3fcfd966/komet-pool-math-proof/borrow-goal-20261002/node16-fix-20261006/carry-word-20261007/continuation-01/double-word-20261007/review/independent-negative-outcome-v1.json",
+    "sha256": "3f73596dba9cf801a9083df79443bd2a060ad55f444de9fd43baf8e731521204",
+    "decision": "NEGATIVE_CONTROL_CONFIRMED_GENUINE_ASSERTION_FAILURE; POSITIVE_THEOREM_UNPROVED"
+  },
+  "independent_preflight": {
+    "path": "/Users/mihaieremia/.codex/visualizations/2026/09/26/01a0ded9-99d4-7d02-bbb7-d1cb3fcfd966/komet-pool-math-proof/borrow-goal-20261002/node16-fix-20261006/carry-word-20261007/continuation-01/double-word-20261007/continuation-01/continuation-01/review/independent-preflight-v1.json",
+    "sha256": "c50bda02b42722dc72cdf433e7dca65ee4a5ed934fdd7cf456e85b3c7afad2a4",
+    "postlaunch": true
+  },
+  "formal_scope": "test_borrow_double: for every RAY<=old<=MAX_BORROW_INDEX_RAY, production borrow index at growth factor2*RAY equals min(2*old,MAX_BORROW_INDEX_RAY). Invalid old values return true from guard."
+}

@@ -1,0 +1,10 @@
+{
+  "exit_code": 1,
+  "wall_seconds": 122,
+  "wall_cap_seconds": 600,
+  "forced_stop_grace_seconds": 15,
+  "started_at": "2026-10-07T06:42:29Z",
+  "program": "komet",
+  "id": "test_borrow_double_wrong",
+  "continuation": false
+}

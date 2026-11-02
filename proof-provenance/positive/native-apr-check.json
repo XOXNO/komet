@@ -1,0 +1,117 @@
+{
+  "checked_at": "2026-10-07T07:44:05.938567+00:00",
+  "process": {
+    "exit_code": 0,
+    "wall_seconds": 189,
+    "wall_cap_seconds": 600,
+    "forced_stop_grace_seconds": 15,
+    "started_at": "2026-10-07T07:39:28Z",
+    "program": "komet",
+    "id": "test_borrow_double",
+    "continuation": true
+  },
+  "native_status": "PASSED",
+  "formal_positive_proof": true,
+  "pending": [],
+  "failing": [],
+  "nodes": 47,
+  "steps": 5871,
+  "covers": [
+    [
+      13,
+      2
+    ],
+    [
+      15,
+      2
+    ],
+    [
+      22,
+      2
+    ],
+    [
+      23,
+      2
+    ],
+    [
+      40,
+      2
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      42,
+      2
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      44,
+      2
+    ],
+    [
+      45,
+      2
+    ],
+    [
+      46,
+      2
+    ],
+    [
+      47,
+      2
+    ]
+  ],
+  "new_covers_from_T": [
+    [
+      40,
+      2
+    ],
+    [
+      41,
+      2
+    ],
+    [
+      42,
+      2
+    ],
+    [
+      43,
+      2
+    ],
+    [
+      44,
+      2
+    ],
+    [
+      45,
+      2
+    ],
+    [
+      46,
+      2
+    ],
+    [
+      47,
+      2
+    ]
+  ],
+  "admitted": false,
+  "bounded": [],
+  "circularity": false,
+  "refutations": {},
+  "subproof_ids": [],
+  "stuck": [],
+  "vacuous": [],
+  "initial_target_identical_to_T": true,
+  "native_fingerprint_identical_to_T": true,
+  "saved_files": 50,
+  "saved_manifest_sha256": "b67b39221f965feb75468fc276287fd3ee1df8ff895190ff390d32db5b2d4baa",
+  "graph_writes_by_checker": false,
+  "backend_execution_by_checker": false,
+  "verification_kind": "Read-only native APR loader and artifact integrity checks; not independent certificate replay."
+}

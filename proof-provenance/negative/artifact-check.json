@@ -1,0 +1,40 @@
+{
+  "checked_at": "2026-10-07T06:45:01.036412+00:00",
+  "process": {
+    "exit_code": 1,
+    "wall_seconds": 122,
+    "wall_cap_seconds": 600,
+    "forced_stop_grace_seconds": 15,
+    "started_at": "2026-10-07T06:42:29Z",
+    "program": "komet",
+    "id": "test_borrow_double_wrong",
+    "continuation": false
+  },
+  "native_status": "FAILED",
+  "formal_positive_proof": false,
+  "pending": [],
+  "failing": [
+    4
+  ],
+  "nodes": 4,
+  "steps": 1464,
+  "covers": [],
+  "admitted": false,
+  "bounded": [],
+  "circularity": false,
+  "refutations": {},
+  "subproof_ids": [],
+  "initial_target_identical_to_frozen_K": true,
+  "fingerprint_only_extra_module_changed": true,
+  "candidate_native_module_full_metadata_identical": true,
+  "pins_before_after": 6492,
+  "saved_files": 7,
+  "saved_manifest_sha256": "0ef7fd454e5101c5264930ae6d67e491e81f9f20e4dbf2a0c578bdad054eb0bf",
+  "graph_writes": false,
+  "backend_execution": false,
+  "genuine_assertion_failure": {
+    "actual": false,
+    "expected": true,
+    "all_four_cterms_identical_to_frozen_K": true
+  }
+}
