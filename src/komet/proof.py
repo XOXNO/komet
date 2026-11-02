@@ -82,10 +82,13 @@ def _check_proof_inputs(id: str, claim: KClaim, extra_module: KFlatModule | None
     }
     if not libraries:
         raise ValueError(f'Compiled LLVM library missing in {llvm.path}')
+    module_inputs = None if extra_module is None else extra_module.to_dict()
+    if module_inputs is not None:
+        module_inputs['localSentences'].sort(key=lambda sentence: json.dumps(sentence, sort_keys=True))
     inputs = {
         'runner': sha256(Path(__file__).read_bytes()).hexdigest(),
         'claim': sha256(json.dumps(claim.to_dict(), sort_keys=True).encode()).hexdigest(),
-        'extra_module': None if extra_module is None else extra_module.to_dict(),
+        'extra_module': module_inputs,
         'definitions': {
             name: sha256((definition.path / 'definition.kore').read_bytes()).hexdigest()
             for name, definition in [('haskell', symbolic_definition()), ('llvm', llvm)]
@@ -128,7 +131,7 @@ def run_claim(
                 or _constraints_unsat(initial, kcfg_explore.cterm_symbolic, module_name)
             ):
                 raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')
-            prover = APRProver(kcfg_explore, execute_depth=1000, extra_module=extra_module)
+            prover = APRProver(kcfg_explore, execute_depth=1000, fast_check_subsumption=True, extra_module=extra_module)
             prover.advance_proof(proof)
             if proof.kcfg.node(proof.init).cterm.is_bottom or proof.kcfg.is_vacuous(proof.init):
                 raise KSorobanError(f'Vacuous initial state for {id}; refusing an empty-domain proof.')

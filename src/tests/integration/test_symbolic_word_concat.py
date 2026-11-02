@@ -318,6 +318,47 @@ def test_u64_shift32_projection_preserves_values_and_partiality(
     assert concat_simplify(Subst({'X': token(-3), 'D': token(1)}).apply(partial)) == token((-3 << 32) % BASE)
 
 
+def test_u64_xor_range_preserves_erased_partial_operands(
+    concat_simplify: Callable[[KInner], KInner],
+) -> None:
+    x, y, d = (KVariable(name, 'Int') for name in ['X', 'Y', 'D'])
+    quotient = KApply('_/Int_', x, d)
+    for bound, expected in [(0, False), (BASE, True)]:
+        expression = KApply('_<Int_', KApply('u64Xor', x, y), token(bound))
+        assert concat_simplify(expression) == token(expected)
+        for a, b in [(quotient, token(0)), (token(0), quotient), (quotient, quotient)]:
+            original = KApply('_<Int_', KApply('u64Xor', a, b), token(bound))
+            result = concat_simplify(original)
+            assert concat_simplify(result) == result
+            _assert_undefined(concat_simplify, Subst({'X': token(1), 'D': token(0)}).apply(result))
+            assert concat_simplify(Subst({'X': token(-1), 'D': token(1)}).apply(result)) == token(expected)
+    near_upper = KApply('_<Int_', KApply('u64Xor', x, y), token(BASE - 1))
+    assert _has_label(concat_simplify(near_upper), 'u64Xor')
+    assert concat_simplify(Subst({'X': token(-1), 'Y': token(0)}).apply(near_upper)) == token(False)
+
+
+def test_u64_packing_survives_projection_and_preserves_guards(
+    concat_simplify: Callable[[KInner], KInner],
+) -> None:
+    h, d = KVariable('H', 'Int'), KVariable('D', 'Int')
+    q = 1 << 32
+    def packed(high: KInner, low: int) -> KInner:
+        return KApply('u64Or', KApply('_*Int_', high, token(q)), token(low))
+    for low in [0, 1, q - 1]:
+        original = packed(h, low)
+        result = concat_simplify(original)
+        assert not _has_label(result, 'u64Or') and concat_simplify(result) == result
+        for high in [-(1 << 400) - 1, -1, 0, q, (1 << 400) + 1]:
+            subst = Subst({'H': token(high)})
+            expected = token(((high * q) | low) % BASE)
+            assert concat_simplify(subst.apply(original)) == concat_simplify(subst.apply(result)) == expected
+        partial = concat_simplify(packed(KApply('_/Int_', h, d), low))
+        _assert_undefined(concat_simplify, Subst({'H': token(1), 'D': token(0)}).apply(partial))
+    for low in [-1, q]:
+        assert _has_label(concat_simplify(packed(h, low)), 'u64Or')
+        assert concat_simplify(packed(token(1), low)) != token(q + low)
+
+
 def test_u64_xor_sign_survives_projection_and_partial_operands(
     concat_simplify: Callable[[KInner], KInner],
 ) -> None:

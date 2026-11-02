@@ -55,10 +55,26 @@ module INT-BITWISE-LEMMAS [symbolic]
         => notBool (#u64Xor(X, Y) <Int 9223372036854775808)
     [simplification]
 
+  // Unsigned range facts; keep default ceilings for both erased operands.
+  rule [u64-xor-nonnegative]:
+      #u64Xor(_X, _Y) <Int 0 => false
+    [simplification]
+
+  rule [u64-xor-upper-bound]:
+      #u64Xor(_X, _Y) <Int 18446744073709551616 => true
+    [simplification]
+
   // A 32-bit shift leaves exactly the original low32 bits in the low64 word.
   rule [project-u64-shift32]:
       (A <<Int 32) modInt 18446744073709551616
         => (A modInt 4294967296) *Int 4294967296
+    [simplification]
+
+  // The projected limbs still occupy disjoint bit ranges; retain both ceilings.
+  rule [u64-pack-bounded-low32]:
+      #u64Or(H *Int 4294967296, L)
+        => (H modInt 4294967296) *Int 4294967296 +Int L
+    requires 0 <=Int L andBool L <Int 4294967296
     [simplification]
 
   rule C |Int S => S |Int C [simplification, concrete(C), symbolic(S)]
