@@ -44,15 +44,14 @@ export PYTHONPATH="$BORROW_DOUBLE_PYK_OVERLAY"
 
 python - <<'PY'
 from hashlib import sha256
+from importlib import import_module
 from pathlib import Path
-from pyk.konvert import _kast_to_kore
-from pyk.proof import reachability
 
-for module, expected in [
-    (_kast_to_kore, 'fdd855b4d4280f8739ffb5963f3d4997756ec44585f4b23ae94cd85f5a75463a'),
-    (reachability, '057fcc12b91f8f7ce355c74626e79df83b6f6623ba8772c2e9813588fd3ef3dd'),
+for name, expected in [
+    ('pyk.konvert._kast_to_kore', 'fdd855b4d4280f8739ffb5963f3d4997756ec44585f4b23ae94cd85f5a75463a'),
+    ('pyk.proof.reachability', '057fcc12b91f8f7ce355c74626e79df83b6f6623ba8772c2e9813588fd3ef3dd'),
 ]:
-    path = Path(module.__file__)
+    path = Path(import_module(name).__file__)
     assert sha256(path.read_bytes()).hexdigest() == expected, path
     print(path)
 PY

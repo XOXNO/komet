@@ -76,9 +76,11 @@ These files and all original artifacts remain local and unchanged.
 
 ## Linux source build
 
-Clone this Komet branch and the pinned backend. Check out Komet
-`d56a4ffb1e13bfa028aaafaab81481da0ad135f8` for a fixed runtime source including
-the overlay, and backend `ba6bac8f48c0a830f93efc9568e1fbebaa04f732`.
+Clone this Komet branch and check out backend
+`ba6bac8f48c0a830f93efc9568e1fbebaa04f732`. The Komet source and overlay
+revisions above identify the preserved executable bytes; use the current
+setup instructions and verify their source hashes. Checking out an earlier
+source revision also checks out older documentation.
 
 Build the backend through its locked flake:
 
