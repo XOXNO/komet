@@ -37,6 +37,7 @@ printf '%s  %s\n' \
 
 export BORROW_DOUBLE_PYK_OVERLAY="$(mktemp -d)"
 cp -R "$BORROW_DOUBLE_PYK_BASE" "$BORROW_DOUBLE_PYK_OVERLAY/pyk"
+chmod -R u+w "$BORROW_DOUBLE_PYK_OVERLAY/pyk"
 cp -R vendor/pyk-overlay/pyk/. "$BORROW_DOUBLE_PYK_OVERLAY/pyk/"
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH="$BORROW_DOUBLE_PYK_OVERLAY"
